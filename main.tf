@@ -170,7 +170,7 @@ resource "azurerm_virtual_machine_extension" "avd_agent" {
       $RegInfo = @{
         Token = "${azurerm_virtual_desktop_host_pool_registration_info.registration.token}"
         RegisteredResourceGroup = "${azurerm_resource_group.rg-AVD2.name}"
-        RegisteredSubscriptionId = "${var.subscription_id}"  # Add this variable
+        RegisteredSubscriptionId = var.subscription_id
       }
       New-Item -Path "C:\\Temp" -ItemType Directory -Force
       Invoke-WebRequest -Uri "https://query.prod.cms.rt.microsoft.com/cms/api/am/binary/RE4wEav" -OutFile "C:\\Temp\\AVDAgent.msi"
