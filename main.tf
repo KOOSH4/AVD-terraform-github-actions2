@@ -103,6 +103,30 @@ resource "azurerm_virtual_desktop_host_pool_registration_info" "registration" {
 }
 
 
+resource "azurerm_virtual_machine_extension" "avd_registration" {
+  name                       = "AVDRegistration"
+  virtual_machine_id         = azurerm_windows_virtual_machine.vm.id
+  publisher                  = "Microsoft.Powershell"
+  type                       = "DSC"
+  type_handler_version       = "2.73"
+  auto_upgrade_minor_version = true
+
+  settings = <<SETTINGS
+    {
+      "modulesUrl": "https://wvdportalstorageblob.blob.core.windows.net/galleryartifacts/Configuration_3-10-2023.zip",
+      "configurationFunction": "Configuration.ps1\\AddSessionHost",
+      "properties": {
+        "HostPoolName": "${azurerm_virtual_desktop_host_pool.hostpool.name}"
+      }
+    }
+  SETTINGS
+
+  depends_on = [
+    azurerm_windows_virtual_machine.vm,
+    azurerm_virtual_desktop_host_pool.hostpool
+  ]
+}
+
 resource "azurerm_windows_virtual_machine" "vm" {
   name                  = var.vm_name
   resource_group_name   = azurerm_resource_group.rg-AVD2.name
@@ -127,8 +151,19 @@ resource "azurerm_windows_virtual_machine" "vm" {
   identity {
     type = "SystemAssigned"
   }
-  depends_on = [azurerm_virtual_network.vnet, azurerm_virtual_desktop_host_pool.hostpool]
 
+  additional_capabilities {
+    ultra_ssd_enabled = true
+  }
+
+  provision_vm_agent = true
+
+  # Remove the existing depends_on and replace with:
+  depends_on = [
+    azurerm_virtual_network.vnet,
+    azurerm_virtual_desktop_host_pool.hostpool,
+    azurerm_virtual_desktop_host_pool_registration_info.registration
+  ]
 }
 
 
@@ -155,19 +190,3 @@ resource "azurerm_virtual_machine_extension" "aad_login" {
   depends_on                 = [azurerm_windows_virtual_machine.vm]
 }
 
-resource "azurerm_virtual_machine_extension" "join_hostpool" {
-  name                 = "JoinHostPool"
-  virtual_machine_id   = azurerm_windows_virtual_machine.vm.id
-  publisher            = "Microsoft.Azure.VirtualDesktop"
-  type                 = "JoinHostPool"
-  type_handler_version = "1.0"
-
-  settings = <<SETTINGS
-    {
-      "registrationToken": "${azurerm_virtual_desktop_host_pool_registration_info.registration.registration_token}",
-      "hostPoolName": "${azurerm_virtual_desktop_host_pool.hostpool.name}"
-    }
-SETTINGS
-
-  depends_on = [azurerm_virtual_desktop_host_pool_registration_info.registration]
-}
