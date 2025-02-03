@@ -74,20 +74,6 @@ resource "azurerm_bastion_host" "bastion" {
   }
 }
 
-resource "azurerm_network_interface" "vm_nic" {
-  name                = var.nic_name
-  location            = azurerm_resource_group.rg-AVD2.location
-  resource_group_name = azurerm_resource_group.rg-AVD2.name
-
-  ip_configuration {
-    name                          = "ipconfig"
-    subnet_id                     = azurerm_subnet.subnet_default.id
-    private_ip_address_allocation = "Dynamic"
-  }
-}
-
-
-
 resource "azurerm_virtual_desktop_host_pool" "hostpool" {
   name                     = var.hostpool_name
   location                 = azurerm_resource_group.rg-AVD2.location
@@ -95,34 +81,6 @@ resource "azurerm_virtual_desktop_host_pool" "hostpool" {
   type                     = "Pooled"
   maximum_sessions_allowed = 6
   load_balancer_type       = "BreadthFirst"
-}
-
-resource "azurerm_windows_virtual_machine" "vm" {
-  name                  = var.vm_name
-  resource_group_name   = azurerm_resource_group.rg-AVD2.name
-  location              = azurerm_resource_group.rg-AVD2.location
-  size                  = "Standard_D4s_v3"
-  admin_username        = var.admin_username
-  admin_password        = var.admin_password
-  network_interface_ids = [azurerm_network_interface.vm_nic.id]
-
-  os_disk {
-    caching              = "ReadWrite"
-    storage_account_type = "StandardSSD_LRS"
-  }
-
-  source_image_reference {
-    publisher = "microsoftwindowsdesktop"
-    offer     = "windows-11"
-    sku       = "win11-24h2-avd"
-    version   = "latest"
-  }
-
-  identity {
-    type = "SystemAssigned"
-  }
-  depends_on = [azurerm_virtual_network.vnet, azurerm_virtual_desktop_host_pool.hostpool]
-
 }
 
 resource "azurerm_virtual_desktop_application_group" "dag" {
@@ -139,15 +97,6 @@ resource "azurerm_virtual_desktop_workspace" "workspace" {
   resource_group_name = azurerm_resource_group.rg-AVD2.name
 }
 
-resource "azurerm_virtual_machine_extension" "aad_login" {
-  name                       = "AADLogin"
-  virtual_machine_id         = azurerm_windows_virtual_machine.vm.id
-  publisher                  = "Microsoft.Azure.ActiveDirectory"
-  type                       = "AADLoginForWindows"
-  type_handler_version       = "1.0"
-  auto_upgrade_minor_version = true
-  depends_on                 = [azurerm_windows_virtual_machine.vm]
-}
 resource "azurerm_virtual_desktop_host_pool_registration_info" "registration" {
   hostpool_id     = azurerm_virtual_desktop_host_pool.hostpool.id
   expiration_date = timeadd(timestamp(), "48h") # Extended token validity
