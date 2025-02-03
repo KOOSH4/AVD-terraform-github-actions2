@@ -22,6 +22,7 @@ env:
   ARM_TENANT_ID: "${{ secrets.TENANT_ID }}"
   TF_VAR_admin_username: ${{ secrets.AVD_ADMIN_USERNAME }}
   TF_VAR_admin_password: ${{ secrets.AVD_ADMIN_PASSWORD }}
+  TF_VAR_subscription_id: ${{ secrets.SUBSCRIPTION_ID }}
 
 jobs:
   terraform-plan:

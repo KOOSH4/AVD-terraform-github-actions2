@@ -154,3 +154,36 @@ resource "azurerm_virtual_machine_extension" "aad_login" {
   auto_upgrade_minor_version = true
   depends_on                 = [azurerm_windows_virtual_machine.vm]
 }
+
+
+resource "azurerm_virtual_machine_extension" "avd_agent" {
+  name                       = "AVDAgent"
+  virtual_machine_id         = azurerm_windows_virtual_machine.vm.id
+  publisher                  = "Microsoft.Compute"
+  type                       = "CustomScriptExtension"
+  type_handler_version       = "1.10"
+  auto_upgrade_minor_version = true
+
+  settings = jsonencode({
+    commandToExecute = <<-EOT
+      # Install AVD Agent
+      $RegInfo = @{
+        Token = "${azurerm_virtual_desktop_host_pool_registration_info.registration.token}"
+        RegisteredResourceGroup = "${azurerm_resource_group.rg-AVD2.name}"
+        RegisteredSubscriptionId = "${var.subscription_id}"  # Add this variable
+      }
+      New-Item -Path "C:\\Temp" -ItemType Directory -Force
+      Invoke-WebRequest -Uri "https://query.prod.cms.rt.microsoft.com/cms/api/am/binary/RE4wEav" -OutFile "C:\\Temp\\AVDAgent.msi"
+      Start-Process msiexec.exe -Wait -ArgumentList "/i C:\\Temp\\AVDAgent.msi /quiet /qn /norestart ADDLOCAL=ALL /l*v C:\\Temp\\AVDAgentInstall.log REGISTRATIONTOKEN=$($RegInfo.Token)"
+      
+      # Install AVD Boot Loader
+      Invoke-WebRequest -Uri "https://query.prod.cms.rt.microsoft.com/cms/api/am/binary/RE4wqLj" -OutFile "C:\\Temp\\AVDBootLoader.msi"
+      Start-Process msiexec.exe -Wait -ArgumentList "/i C:\\Temp\\AVDBootLoader.msi /quiet /qn /norestart /l*v C:\\Temp\\AVDBootLoaderInstall.log"
+    EOT
+  })
+
+  depends_on = [
+    azurerm_virtual_desktop_host_pool_registration_info.registration,
+    azurerm_windows_virtual_machine.vm
+  ]
+}
