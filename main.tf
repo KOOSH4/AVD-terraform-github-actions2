@@ -62,17 +62,6 @@ resource "azurerm_public_ip" "bastion_ip" {
   sku                 = "Standard"
 }
 
-resource "azurerm_bastion_host" "bastion" {
-  name                = var.bastion_name
-  location            = azurerm_resource_group.rg-AVD2.location
-  resource_group_name = azurerm_resource_group.rg-AVD2.name
-
-  ip_configuration {
-    name                 = "IpConf"
-    subnet_id            = azurerm_subnet.subnet_bastion.id
-    public_ip_address_id = azurerm_public_ip.bastion_ip.id
-  }
-}
 
 resource "azurerm_virtual_desktop_host_pool" "hostpool" {
   name                     = var.hostpool_name
@@ -102,28 +91,29 @@ resource "azurerm_virtual_desktop_host_pool_registration_info" "registration" {
   expiration_date = timeadd(timestamp(), "48h") # Extended token validity
 }
 
-
 resource "azurerm_virtual_machine_extension" "avd_registration" {
   name                       = "AVDRegistration"
   virtual_machine_id         = azurerm_windows_virtual_machine.vm.id
   publisher                  = "Microsoft.Powershell"
   type                       = "DSC"
-  type_handler_version       = "2.73"
+  type_handler_version       = "2.83"
   auto_upgrade_minor_version = true
 
   settings = <<SETTINGS
     {
-      "modulesUrl": "https://wvdportalstorageblob.blob.core.windows.net/galleryartifacts/Configuration_3-10-2023.zip",
-      "configurationFunction": "Configuration.ps1\\AddSessionHost",
+      "modulesUrl": "",
+      "configurationFunction": "",
       "properties": {
-        "HostPoolName": "${azurerm_virtual_desktop_host_pool.hostpool.name}"
+        "HostPoolName": "${azurerm_virtual_desktop_host_pool.hostpool.name}",
+        "RegistrationInfoToken": "${azurerm_virtual_desktop_host_pool_registration_info.registration.token}"
       }
     }
   SETTINGS
 
   depends_on = [
     azurerm_windows_virtual_machine.vm,
-    azurerm_virtual_desktop_host_pool.hostpool
+    azurerm_virtual_desktop_host_pool.hostpool,
+    azurerm_virtual_desktop_host_pool_registration_info.registration
   ]
 }
 
