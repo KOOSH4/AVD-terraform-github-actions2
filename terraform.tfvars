@@ -1,3 +1,12 @@
 # Sample values
 resource_group_name = "rg-AVD2-pool-dewc"
 location            = "westeurope"
+vnet_name                = "vnet-avd2-wstrp"
+bastion_name             = "vnet-avd2-wstrp-bastion"
+bastion_public_ip_name   = "vnet-avd2-wstrp-ip"
+nic_name                 = "nic-avd2-wstrp"
+vm_name                  = "vms-avd2-wstrp"
+admin_username           = "threaten66"
+hostpool_name            = "hostpool-avd2-wstrp"
+application_group_name   = "AG-avd2-wstrp"
+workspace_name           = "workspace-avd2-wstrp"
