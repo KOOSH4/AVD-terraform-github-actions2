@@ -86,6 +86,17 @@ resource "azurerm_network_interface" "vm_nic" {
   }
 }
 
+
+
+resource "azurerm_virtual_desktop_host_pool" "hostpool" {
+  name                     = var.hostpool_name
+  location                 = azurerm_resource_group.rg-AVD2.location
+  resource_group_name      = azurerm_resource_group.rg-AVD2.name
+  type                     = "Pooled"
+  maximum_sessions_allowed = 6
+  load_balancer_type       = "BreadthFirst"
+}
+
 resource "azurerm_windows_virtual_machine" "vm" {
   name                  = var.vm_name
   resource_group_name   = azurerm_resource_group.rg-AVD2.name
@@ -110,15 +121,8 @@ resource "azurerm_windows_virtual_machine" "vm" {
   identity {
     type = "SystemAssigned"
   }
-}
+  depends_on = [azurerm_virtual_network.vnet, azurerm_virtual_desktop_host_pool.hostpool]
 
-resource "azurerm_virtual_desktop_host_pool" "hostpool" {
-  name                     = var.hostpool_name
-  location                 = azurerm_resource_group.rg-AVD2.location
-  resource_group_name      = azurerm_resource_group.rg-AVD2.name
-  type                     = "Pooled"
-  maximum_sessions_allowed = 6
-  load_balancer_type       = "BreadthFirst"
 }
 
 resource "azurerm_virtual_desktop_application_group" "dag" {
@@ -143,4 +147,9 @@ resource "azurerm_virtual_machine_extension" "aad_login" {
   type_handler_version       = "1.0"
   auto_upgrade_minor_version = true
   depends_on                 = [azurerm_windows_virtual_machine.vm]
+}
+resource "azurerm_virtual_desktop_host_pool_registration_info" "registration" {
+  hostpool_id     = azurerm_virtual_desktop_host_pool.avd_host_pool.id
+  expiration_date = timeadd(timestamp(), "48h") # Extended token validity
+  depends_on      = [azurerm_virtual_desktop_host_pool.avd_host_pool]
 }
