@@ -155,27 +155,19 @@ resource "azurerm_virtual_machine_extension" "aad_login" {
   depends_on                 = [azurerm_windows_virtual_machine.vm]
 }
 
-# Add a custom script extension to install the AVD agent and register the VM
-resource "azurerm_virtual_machine_extension" "avd_agent" {
-  name                       = "AVDAgent"
-  virtual_machine_id         = azurerm_windows_virtual_machine.vm.id
-  publisher                  = "Microsoft.Compute"
-  type                       = "CustomScriptExtension"
-  type_handler_version       = "1.10"
-  auto_upgrade_minor_version = true
+resource "azurerm_virtual_machine_extension" "join_hostpool" {
+  name                 = "JoinHostPool"
+  virtual_machine_id   = azurerm_windows_virtual_machine.vm.id
+  publisher            = "Microsoft.Azure.VirtualDesktop"
+  type                 = "JoinHostPool"
+  type_handler_version = "1.0"
 
   settings = <<SETTINGS
     {
-      "fileUris": ["https://gist.githubusercontent.com/Smalls1652/53a77a6637cbbe51c3e845b1fae61b50/raw/63afd20d4fac5cc048370656b620e5eb904fc1fb/Invoke-AvdAgentInstall.ps1"],
-      "commandToExecute": "powershell -ExecutionPolicy Unrestricted -File avd-agent-installer.ps1 -HostPoolARMPath ${azurerm_virtual_desktop_host_pool.hostpool.id} -AadTenantId ${data.azurerm_client_config.current.tenant_id} -RegistrationToken '${azurerm_virtual_desktop_host_pool_registration_info.registration.token}'"
+      "registrationToken": "${azurerm_virtual_desktop_host_pool_registration_info.registration.registration_token}",
+      "hostPoolName": "${azurerm_virtual_desktop_host_pool.hostpool.name}"
     }
 SETTINGS
 
-  depends_on = [
-    azurerm_virtual_machine_extension.aad_login,
-    azurerm_virtual_desktop_host_pool_registration_info.registration
-  ]
+  depends_on = [azurerm_virtual_desktop_host_pool_registration_info.registration]
 }
-
-# Retrieve the tenant ID for the current subscription
-data "azurerm_client_config" "current" {}
