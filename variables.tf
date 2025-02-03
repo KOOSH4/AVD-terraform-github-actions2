@@ -9,17 +9,6 @@ variable "location" {
   default     = "westeurope"
 }
 
-variable "resource_group_name" {
-  type        = string
-  description = "Name of the Azure Resource Group"
-}
-
-variable "location" {
-  type        = string
-  description = "Azure Region"
-  default     = "westeurope"
-}
-
 variable "vnet_name" {
   type        = string
   description = "Name of the Virtual Network"
