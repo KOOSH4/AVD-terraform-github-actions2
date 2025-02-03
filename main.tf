@@ -152,10 +152,6 @@ resource "azurerm_windows_virtual_machine" "vm" {
     type = "SystemAssigned"
   }
 
-  additional_capabilities {
-    ultra_ssd_enabled = true
-  }
-
   provision_vm_agent = true
 
   # Remove the existing depends_on and replace with:
