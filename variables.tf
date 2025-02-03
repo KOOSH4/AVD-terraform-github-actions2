@@ -45,6 +45,12 @@ variable "admin_password" {
   sensitive   = true
 }
 
+variable "subscription_id" {
+  type        = string
+  description = "subscription id"
+  sensitive   = true
+}
+
 variable "hostpool_name" {
   type        = string
   description = "Name of the AVD Host Pool"
