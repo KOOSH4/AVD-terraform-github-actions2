@@ -178,3 +178,69 @@ PROTECTED_SETTINGS
 
   depends_on = [azurerm_virtual_desktop_host_pool.hostpool]
 }
+
+
+
+
+resource "azurerm_log_analytics_workspace" "avd_logs" {
+  name                = "law-avd-logs"
+  location            = var.location
+  resource_group_name = azurerm_resource_group.rg-AVD2.name
+  sku                 = "PerGB2018"
+  retention_in_days   = 30
+}
+
+resource "azurerm_monitor_diagnostic_setting" "avd_vm_diag" {
+  name                       = "diag-avd-vm"
+  target_resource_id         = azurerm_windows_virtual_machine.vm.id
+  log_analytics_workspace_id = azurerm_log_analytics_workspace.avd_logs.id
+
+  metric {
+    category = "AllMetrics"
+    enabled  = true
+  }
+
+  depends_on = [azurerm_windows_virtual_machine.vm, azurerm_log_analytics_workspace.avd_logs]
+}
+
+resource "azurerm_monitor_diagnostic_setting" "avd_hostpool_diag" {
+  name                       = "diag-avd-hostpool"
+  target_resource_id         = azurerm_virtual_desktop_host_pool.hostpool.id
+  log_analytics_workspace_id = azurerm_log_analytics_workspace.avd_logs.id
+
+  enabled_log { category = "Checkpoint" }
+  enabled_log { category = "Error" }
+  enabled_log { category = "Management" }
+  enabled_log { category = "Connection" }
+  enabled_log { category = "HostRegistration" }
+  enabled_log { category = "AgentHealthStatus" }
+  enabled_log { category = "NetworkData" }
+  enabled_log { category = "ConnectionGraphicsData" }
+  enabled_log { category = "SessionHostManagement" }
+  enabled_log { category = "AutoscaleEvaluationPooled" }
+  depends_on = [azurerm_windows_virtual_machine.vm, azurerm_log_analytics_workspace.avd_logs]
+
+}
+
+resource "azurerm_monitor_metric_alert" "avd_cpu_alert" {
+  name                = "avd-vm-high-cpu"
+  resource_group_name = azurerm_resource_group.rg-AVD2.name
+  scopes              = [azurerm_windows_virtual_machine.vm.id]
+  description         = "Alert when average CPU usage on AVD VM exceeds 80% for 5 minutes."
+  severity            = 2
+  window_size         = "PT5M"
+  frequency           = "PT1M"
+
+  target_resource_type     = "Microsoft.Compute/virtualMachines"
+  target_resource_location = var.location
+
+  criteria {
+    metric_namespace = "Microsoft.Compute/virtualMachines"
+    metric_name      = "Percentage CPU"
+    aggregation      = "Average"
+    operator         = "GreaterThan"
+    threshold        = 80
+  }
+  depends_on = [azurerm_windows_virtual_machine.vm, azurerm_log_analytics_workspace.avd_logs]
+
+}
