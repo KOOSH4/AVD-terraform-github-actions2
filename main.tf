@@ -176,7 +176,5 @@ SETTINGS
   }
 PROTECTED_SETTINGS
 
-  depends_on = [
-    azurerm_virtual_desktop_host_pool.avd_host_pool
-  ]
+
 }
