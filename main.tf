@@ -91,26 +91,6 @@ resource "azurerm_virtual_desktop_host_pool_registration_info" "registration" {
   expiration_date = timeadd(timestamp(), "48h") # Extended token validity
 }
 
-resource "azurerm_virtual_machine_extension" "avd_registration" {
-  name                       = "${var.vm_name}-avd-registration"
-  virtual_machine_id         = azurerm_windows_virtual_machine.vm.id
-  publisher                  = "Microsoft.Compute"
-  type                       = "CustomScriptExtension"
-  type_handler_version       = "1.10"
-  auto_upgrade_minor_version = true
-
-  settings = <<SETTINGS
-    {
-      "commandToExecute": "powershell.exe -Command \"& {$RegistrationToken = '${azurerm_virtual_desktop_host_pool_registration_info.registration.token}'; mkdir 'C:\\Program Files\\Azure Virtual Desktop Agents'; Invoke-WebRequest -Uri 'https://aka.ms/downloadavdagent' -OutFile 'C:\\Program Files\\Azure Virtual Desktop Agents\\AVDAgent.msi'; Start-Process msiexec.exe -Wait -ArgumentList '/i C:\\Program Files\\Azure Virtual Desktop Agents\\AVDAgent.msi /qn REGISTRATIONTOKEN=$RegistrationToken'}\""
-    }
-  SETTINGS
-
-  depends_on = [
-    azurerm_virtual_machine_extension.aad_login,
-    azurerm_virtual_desktop_host_pool.hostpool
-  ]
-}
-
 resource "azurerm_windows_virtual_machine" "vm" {
   name                  = var.vm_name
   resource_group_name   = azurerm_resource_group.rg-AVD2.name
@@ -170,3 +150,33 @@ resource "azurerm_virtual_machine_extension" "aad_login" {
   depends_on                 = [azurerm_windows_virtual_machine.vm]
 }
 
+resource "azurerm_virtual_machine_extension" "avd_dsc" {
+  name                       = "vm0-avd-dsc"
+  virtual_machine_id         = azurerm_windows_virtual_machine.vm.id
+  publisher                  = "Microsoft.Powershell"
+  type                       = "DSC"
+  type_handler_version       = "2.73"
+  auto_upgrade_minor_version = true
+
+  settings = <<SETTINGS
+  {
+    "modulesUrl": "https://wvdportalstorageblob.blob.core.windows.net/galleryartifacts/Configuration_09-08-2022.zip",
+    "configurationFunction": "Configuration.ps1\\AddSessionHost",
+    "properties": {
+      "HostPoolName": "${azurerm_virtual_desktop_host_pool.avd_host_pool.name}"
+    }
+  }
+SETTINGS
+
+  protected_settings = <<PROTECTED_SETTINGS
+  {
+    "properties": {
+      "registrationInfoToken": "${azurerm_virtual_desktop_host_pool_registration_info.registration.token}"
+    }
+  }
+PROTECTED_SETTINGS
+
+  depends_on = [
+    azurerm_virtual_desktop_host_pool.avd_host_pool
+  ]
+}
