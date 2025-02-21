@@ -31,11 +31,11 @@ module "resource_group" {
 }
 
 module "network" {
-  source                   = "./modules/network"
-  resource_group_name      = module.resource_group.name
-  location                 = var.location
-  vnet_name                = var.vnet_name
-  bastion_public_ip_name   = var.bastion_public_ip_name
+  source                 = "./modules/network"
+  resource_group_name    = module.resource_group.name
+  location               = var.location
+  vnet_name              = var.vnet_name
+  bastion_public_ip_name = var.bastion_public_ip_name
 }
 
 module "virtual_desktop" {
