@@ -48,14 +48,14 @@ resource "azurerm_virtual_machine_extension" "avd_dsc" {
     "modulesUrl": "https://wvdportalstorageblob.blob.core.windows.net/galleryartifacts/Configuration_09-08-2022.zip",
     "configurationFunction": "Configuration.ps1\\AddSessionHost",
     "properties": {
-      "HostPoolId": var.host_pool_id
+      "HostPoolId": "${var.host_pool_id}"
     }
   }
 SETTINGS
   protected_settings         = <<PROTECTED_SETTINGS
   {
     "properties": {
-      "registrationInfoToken": var.registration_token
+      "registrationInfoToken": "${var.registration_token}"
     }
   }
 PROTECTED_SETTINGS
