@@ -128,7 +128,9 @@ jobs:
 
 
     - name: Terraform Refresh
-      run: terraform refresh
-      
+      run: |
+        terraform refresh
+        terraform plan -out=tfplan
+
     - name: Terraform Apply
       run: terraform apply -auto-approve tfplan
