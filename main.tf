@@ -6,7 +6,6 @@ terraform {
     }
   }
 
-  # Update this block with the location of your terraform state file
   backend "azurerm" {
     resource_group_name  = "rg-terraform-github-actions-AVD2"
     storage_account_name = "trfrmgthbactnstt"
@@ -23,9 +22,10 @@ provider "azurerm" {
   }
 }
 
-// Module calls replacing resource definitions
 module "resource_group" {
-  source = "./modules/resource_group"
+  source              = "./modules/resource_group"
+  resource_group_name = var.resource_group_name
+  location            = var.location
 }
 
 module "network" {
@@ -34,10 +34,16 @@ module "network" {
   location               = var.location
   vnet_name              = var.vnet_name
   bastion_public_ip_name = var.bastion_public_ip_name
+  nic_name               = var.nic_name
 }
 
 module "virtual_desktop" {
-  source = "./modules/virtual_desktop"
+  source                 = "./modules/virtual_desktop"
+  resource_group_name    = module.resource_group.resource_group_name
+  location               = var.location
+  hostpool_name          = var.hostpool_name
+  application_group_name = var.application_group_name
+  workspace_name         = var.workspace_name
 }
 
 module "virtual_machine" {
@@ -54,5 +60,9 @@ module "virtual_machine" {
 }
 
 module "monitoring" {
-  source = "./modules/monitoring"
+  source              = "./modules/monitoring"
+  resource_group_name = module.resource_group.resource_group_name
+  location            = var.location
+  vm_id               = module.virtual_machine.vm_id
+  hostpool_id         = module.virtual_desktop.hostpool_id
 }
