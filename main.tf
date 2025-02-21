@@ -25,7 +25,7 @@ provider "azurerm" {
 
 // Module calls replacing resource definitions
 module "resource_group" {
-  source              = "./modules/resource_group"
+  source = "./modules/resource_group"
 }
 
 module "network" {
@@ -37,7 +37,7 @@ module "network" {
 }
 
 module "virtual_desktop" {
-  source                 = "./modules/virtual_desktop"
+  source = "./modules/virtual_desktop"
 }
 
 module "virtual_machine" {
