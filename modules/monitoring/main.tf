@@ -30,16 +30,16 @@ resource "azurerm_monitor_diagnostic_setting" "avd_hostpool_diag" {
 }
 
 resource "azurerm_monitor_metric_alert" "avd_cpu_alert" {
-  name                      = "avd-vm-high-cpu"
-  resource_group_name       = var.resource_group_name
-  scopes                    = [var.vm_id]
-  description               = "Alert when average CPU usage on AVD VM exceeds 80% for 5 minutes."
-  severity                  = 2
-  window_size               = "PT5M"
-  frequency                 = "PT1M"
+  name                = "avd-vm-high-cpu"
+  resource_group_name = var.resource_group_name
+  scopes              = [var.vm_id]
+  description         = "Alert when average CPU usage on AVD VM exceeds 80% for 5 minutes."
+  severity            = 2
+  window_size         = "PT5M"
+  frequency           = "PT1M"
 
-  target_resource_type      = "Microsoft.Compute/virtualMachines"
-  target_resource_location  = var.location
+  target_resource_type     = "Microsoft.Compute/virtualMachines"
+  target_resource_location = var.location
 
   criteria {
     metric_namespace = "Microsoft.Compute/virtualMachines"

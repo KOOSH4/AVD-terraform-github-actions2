@@ -43,7 +43,7 @@ resource "azurerm_virtual_machine_extension" "avd_dsc" {
   type                       = "DSC"
   type_handler_version       = "2.73"
   auto_upgrade_minor_version = true
-  settings = <<SETTINGS
+  settings                   = <<SETTINGS
   {
     "modulesUrl": "https://wvdportalstorageblob.blob.core.windows.net/galleryartifacts/Configuration_09-08-2022.zip",
     "configurationFunction": "Configuration.ps1\\AddSessionHost",
@@ -52,7 +52,7 @@ resource "azurerm_virtual_machine_extension" "avd_dsc" {
     }
   }
 SETTINGS
-  protected_settings = <<PROTECTED_SETTINGS
+  protected_settings         = <<PROTECTED_SETTINGS
   {
     "properties": {
       "registrationInfoToken": var.registration_token
