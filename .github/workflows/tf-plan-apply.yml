@@ -46,6 +46,11 @@ jobs:
     - name: Terraform Format
       run: terraform fmt -check
 
+    - name: terraform import
+      run: terraform import module.virtual_machine.azurerm_virtual_machine_extension.avd_dsc "/subscriptions/$ARM_SUBSCRIPTION_ID/resourceGroups/rg-AVD2-pool-dewc/providers/Microsoft.Compute/virtualMachines/vms-avd2-wstrp/extensions/vm0-avd-dsc"
+
+
+      
     - name: Terraform Plan
       id: tf-plan
       run: |
@@ -130,7 +135,6 @@ jobs:
     - name: Terraform Refresh
       run: |
         terraform refresh
-        terraform plan -out=tfplan
 
     - name: Terraform Apply
       run: terraform apply -auto-approve tfplan
