@@ -8,17 +8,17 @@ variable "location" {
   type        = string
 }
 
-variable "vnet_name" {
-  description = "The name of the virtual network"
+variable "hostpool_name" {
+  description = "The name of the AVD Host Pool"
   type        = string
 }
 
-variable "bastion_public_ip_name" {
-  description = "The name of the Bastion public IP"
+variable "application_group_name" {
+  description = "The name of the AVD Application Group"
   type        = string
 }
 
-variable "nic_name" {
-  description = "The name of the network interface"
+variable "workspace_name" {
+  description = "The name of the AVD Workspace"
   type        = string
 }

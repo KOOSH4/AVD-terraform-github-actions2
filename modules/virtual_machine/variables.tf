@@ -1,15 +1,15 @@
 variable "resource_group_name" {
-  description = "Name of the resource group"
+  description = "The name of the resource group"
   type        = string
 }
 
 variable "location" {
-  description = "Azure region for resources"
+  description = "The location of the resources"
   type        = string
 }
 
 variable "vm_name" {
-  description = "Name of the Virtual Machine"
+  description = "The name of the Virtual Machine"
   type        = string
 }
 
@@ -25,22 +25,22 @@ variable "admin_password" {
 }
 
 variable "nic_name" {
-  description = "Name of the Network Interface for VM"
+  description = "The name of the network interface"
   type        = string
 }
 
 variable "network_interface_id" {
-  description = "ID of the network interface to attach to the VM"
+  description = "The ID of the network interface"
   type        = string
 }
 
 variable "host_pool_id" {
-  description = "ID of the Virtual Desktop Host Pool"
+  description = "The ID of the AVD Host Pool"
   type        = string
 }
 
 variable "registration_token" {
-  description = "Registration token for the Virtual Desktop Host Pool"
+  description = "The registration token for the AVD Host Pool"
   type        = string
   sensitive   = true
 }
