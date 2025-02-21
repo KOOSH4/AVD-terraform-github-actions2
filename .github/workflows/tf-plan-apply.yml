@@ -43,9 +43,6 @@ jobs:
     - name: Terraform Init
       run: terraform init
 
-    - name: Terraform Import
-      run: terraform import azurerm_log_analytics_workspace.avd_logs /subscriptions/$ARM_SUBSCRIPTION_ID/resourceGroups/rg-AVD2-pool-dewc/providers/Microsoft.OperationalInsights/workspaces/law-avd-logs
-
     - name: Terraform Format
       run: terraform fmt -check
 
