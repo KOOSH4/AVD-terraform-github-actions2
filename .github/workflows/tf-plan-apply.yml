@@ -126,5 +126,9 @@ jobs:
       with:
         name: tfplan
 
+
+    - name: Terraform Refresh
+      run: terraform refresh
+      
     - name: Terraform Apply
       run: terraform apply -auto-approve tfplan
