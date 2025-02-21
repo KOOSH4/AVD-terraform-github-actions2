@@ -16,7 +16,6 @@ terraform {
 }
 
 provider "azurerm" {
-  resource_provider_registrations = "none"
   features {
 
   }
@@ -30,7 +29,7 @@ module "resource_group" {
 
 module "network" {
   source                 = "./modules/network"
-  resource_group_name    = module.resource_group.resource_group_name
+  resource_group_name    = var.resource_group_name
   location               = var.location
   vnet_name              = var.vnet_name
   bastion_public_ip_name = var.bastion_public_ip_name
@@ -39,7 +38,7 @@ module "network" {
 
 module "virtual_desktop" {
   source                 = "./modules/virtual_desktop"
-  resource_group_name    = module.resource_group.resource_group_name
+  resource_group_name    = var.resource_group_name
   location               = var.location
   hostpool_name          = var.hostpool_name
   application_group_name = var.application_group_name
@@ -48,7 +47,7 @@ module "virtual_desktop" {
 
 module "virtual_machine" {
   source               = "./modules/virtual_machine"
-  resource_group_name  = module.resource_group.resource_group_name
+  resource_group_name  = var.resource_group_name
   location             = var.location
   vm_name              = var.vm_name
   admin_username       = var.admin_username
@@ -61,7 +60,7 @@ module "virtual_machine" {
 
 module "monitoring" {
   source              = "./modules/monitoring"
-  resource_group_name = module.resource_group.resource_group_name
+  resource_group_name = var.resource_group_name
   location            = var.location
   vm_id               = module.virtual_machine.vm_id
   hostpool_id         = module.virtual_desktop.hostpool_id
