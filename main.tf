@@ -249,20 +249,20 @@ resource "azurerm_monitor_metric_alert" "avd_cpu_alert" {
 #### FSLOGIX ####
 
 resource "azurerm_storage_account" "fslogix_storage" {
-  name                     = "fslogixavdeuw1"
-  resource_group_name      = azurerm_resource_group.rg-AVD2.name
-  location                 = azurerm_resource_group.rg-AVD2.location
-  account_tier             = "Standard"
-  account_replication_type = "LRS"
-  https_traffic_only_enabled  = true
-  min_tls_version          = "TLS1_2"
+  name                       = "fslogixavdeuw1"
+  resource_group_name        = azurerm_resource_group.rg-AVD2.name
+  location                   = azurerm_resource_group.rg-AVD2.location
+  account_tier               = "Standard"
+  account_replication_type   = "LRS"
+  https_traffic_only_enabled = true
+  min_tls_version            = "TLS1_2"
   identity {
     type = "SystemAssigned"
   }
 }
 
 resource "azurerm_storage_share" "fslogix_share" {
-  name                 = "fslogixprofiles"
+  name               = "fslogixprofiles"
   storage_account_id = azurerm_storage_account.fslogix_storage.id
-  quota               = 100  # Storage in GB
+  quota              = 100 # Storage in GB
 }
