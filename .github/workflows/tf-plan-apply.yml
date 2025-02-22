@@ -46,11 +46,6 @@ jobs:
     - name: Terraform Format
       run: terraform fmt -check
 
-    - name: terraform plan -out
-      run: terraform plan -out=tfplan
-
-
-      
     - name: Terraform Plan
       id: tf-plan
       run: |
@@ -70,6 +65,7 @@ jobs:
       with:
         name: tfplan
         path: tfplan
+        retention-days: 1
 
     - name: Create String Output
       id: tf-plan-string
@@ -122,6 +118,8 @@ jobs:
 
     - name: Setup Terraform
       uses: hashicorp/setup-terraform@v3
+      with:
+        terraform_wrapper: false
 
     - name: Terraform Init
       run: terraform init
@@ -131,10 +129,8 @@ jobs:
       with:
         name: tfplan
 
-
-    - name: Terraform Refresh
-      run: |
-        terraform refresh
+    - name: Terraform Plan Show
+      run: terraform show tfplan
 
     - name: Terraform Apply
-      run: terraform apply -auto-approve tfplan
+      run: terraform apply -auto-approve tfplan || (terraform plan -out tfplan && terraform apply -auto-approve tfplan)
