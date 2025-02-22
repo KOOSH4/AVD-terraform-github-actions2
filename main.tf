@@ -119,7 +119,6 @@ resource "azurerm_windows_virtual_machine" "vm" {
   depends_on = [
     azurerm_virtual_network.vnet,
     azurerm_virtual_desktop_host_pool.hostpool,
-    azurerm_virtual_desktop_host_pool_registration_info.registration
   ]
 }
 
@@ -146,10 +145,6 @@ resource "azurerm_virtual_machine_extension" "aad_login" {
   auto_upgrade_minor_version = true
   depends_on                 = [azurerm_windows_virtual_machine.vm]
 }
-
-
-
-
 
 resource "azurerm_log_analytics_workspace" "avd_logs" {
   name                = "law-avd-logs"
