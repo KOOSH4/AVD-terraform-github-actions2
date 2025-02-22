@@ -88,7 +88,7 @@ resource "azurerm_virtual_desktop_workspace" "workspace" {
 
 resource "azurerm_virtual_desktop_host_pool_registration_info" "registration" {
   hostpool_id     = azurerm_virtual_desktop_host_pool.hostpool.id
-  expiration_date = timeadd(timestamp(), "48h") # Extended token validity
+  expiration_date = timeadd(timestamp(), "96h") # Extended token validity
 }
 
 resource "azurerm_windows_virtual_machine" "vm" {
@@ -245,7 +245,10 @@ resource "azurerm_monitor_metric_alert" "avd_cpu_alert" {
 
 }
 
-
+resource "azurerm_virtual_desktop_workspace_application_group_association" "dag_workspace_assoc" {
+  workspace_id         = azurerm_virtual_desktop_workspace.workspace.id
+  application_group_id = azurerm_virtual_desktop_application_group.dag.id
+}
 #### FSLOGIX ####
 
 resource "azurerm_storage_account" "fslogix_storage" {
