@@ -45,6 +45,7 @@ module "virtual_desktop" {
   hostpool_name          = var.hostpool_name
   application_group_name = var.application_group_name
   workspace_name         = var.workspace_name
+  host_pool_name         = var.host_pool_name
 }
 
 module "virtual_machine" {
@@ -58,6 +59,7 @@ module "virtual_machine" {
   network_interface_id = module.network.vm_nic_id
   host_pool_id         = module.virtual_desktop.hostpool_id
   registration_token   = module.virtual_desktop.registration_token
+  host_pool_name       = var.host_pool_name
 }
 
 module "monitoring" {

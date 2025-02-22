@@ -1,17 +1,17 @@
 variable "resource_group_name" {
-  description = "Name of the resource group"
+  description = "The name of the resource group"
   type        = string
   default     = "rg-AVD2-pool-dewc"
 }
 variable "location" {
-  description = "Azure region for resources"
+  description = "The location of the resources"
   type        = string
   default     = "westeurope"
 }
 
 variable "vnet_name" {
   type        = string
-  description = "Name of the Virtual Network"
+  description = "The name of the Virtual Network"
 }
 
 variable "bastion_name" {
@@ -21,17 +21,17 @@ variable "bastion_name" {
 
 variable "bastion_public_ip_name" {
   type        = string
-  description = "Name of the Public IP for Azure Bastion"
+  description = "The name of the Bastion Public IP"
 }
 
 variable "nic_name" {
   type        = string
-  description = "Name of the Network Interface for VM"
+  description = "The name of the network interface"
 }
 
 variable "vm_name" {
   type        = string
-  description = "Name of the Virtual Machine"
+  description = "The name of the Virtual Machine"
 }
 
 variable "admin_username" {
@@ -53,17 +53,17 @@ variable "subscription_id" {
 
 variable "hostpool_name" {
   type        = string
-  description = "Name of the AVD Host Pool"
+  description = "The name of the AVD Host Pool"
 }
 
 variable "application_group_name" {
   type        = string
-  description = "Name of the AVD Application Group"
+  description = "The name of the Application Group"
 }
 
 variable "workspace_name" {
   type        = string
-  description = "Name of the AVD Workspace"
+  description = "The name of the Workspace"
 }
 variable "host_pool_name" {
   description = "The name of the AVD Host Pool"
