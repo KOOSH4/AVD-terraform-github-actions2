@@ -119,11 +119,48 @@ resource "azurerm_windows_virtual_machine" "vm" {
   depends_on = [
     azurerm_virtual_network.vnet,
     azurerm_virtual_desktop_host_pool.hostpool,
+    azurerm_virtual_desktop_host_pool_registration_info.registration
   ]
 }
 
 
+resource "azurerm_virtual_desktop_host_pool_registration_info" "registration" {
+  hostpool_id     = azurerm_virtual_desktop_host_pool.hostpool.id
+  expiration_date = timeadd(timestamp(), "96h") # Extended token validity
+}
 
+
+resource "azurerm_virtual_machine_extension" "avd_dsc" {
+  name                       = "vm0-avd-dsc"
+  virtual_machine_id         = azurerm_windows_virtual_machine.vm.id
+  publisher                  = "Microsoft.Powershell"
+  type                       = "DSC"
+  type_handler_version       = "2.73"
+  auto_upgrade_minor_version = true
+
+  settings = <<SETTINGS
+  {
+    "modulesUrl": "https://wvdportalstorageblob.blob.core.windows.net/galleryartifacts/Configuration_09-08-2022.zip",
+    "configurationFunction": "Configuration.ps1\\AddSessionHost",
+    "properties": {
+      "HostPoolName": "${azurerm_virtual_desktop_host_pool.hostpool.name}"
+    }
+  }
+SETTINGS
+
+  protected_settings = <<PROTECTED_SETTINGS
+  {
+    "properties": {
+      "registrationInfoToken": "${azurerm_virtual_desktop_host_pool_registration_info.registration.token}"
+    }
+  }
+PROTECTED_SETTINGS
+
+  depends_on = [
+    azurerm_virtual_desktop_host_pool.hostpool,
+    azurerm_virtual_desktop_host_pool_registration_info.registration
+  ]
+}
 resource "azurerm_network_interface" "vm_nic" {
   name                = var.nic_name
   location            = azurerm_resource_group.rg-AVD2.location
@@ -145,6 +182,7 @@ resource "azurerm_virtual_machine_extension" "aad_login" {
   auto_upgrade_minor_version = true
   depends_on                 = [azurerm_windows_virtual_machine.vm]
 }
+
 
 resource "azurerm_log_analytics_workspace" "avd_logs" {
   name                = "law-avd-logs"
