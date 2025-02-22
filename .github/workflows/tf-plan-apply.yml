@@ -21,6 +21,7 @@ env:
   TF_VAR_admin_username: ${{ secrets.AVD_ADMIN_USERNAME }}
   TF_VAR_admin_password: ${{ secrets.AVD_ADMIN_PASSWORD }}
   TF_VAR_subscription_id: ${{ secrets.SUBSCRIPTION_ID }}
+  TF_VAR_host_pool_name: ${{ secrets.HOST_POOL_NAME }}
 
 jobs:
   terraform-plan:
@@ -45,6 +46,10 @@ jobs:
 
     - name: Terraform Format
       run: terraform fmt -check
+
+    - name: Terraform import
+      run: terraform import azurerm_virtual_machine_extension.avd_dsc "/subscriptions/$ARM_SUBSCRIPTION_ID/resourceGroups/rg-AVD2-pool-dewc/providers/Microsoft.Compute/virtualMachines/vms-avd2-wstrp/extensions/vm0-avd-dsc"
+
 
     - name: Terraform Plan
       id: tf-plan
