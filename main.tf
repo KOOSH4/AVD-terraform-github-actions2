@@ -150,11 +150,36 @@ resource "azurerm_virtual_machine_extension" "aad_login" {
   depends_on                 = [azurerm_windows_virtual_machine.vm]
 }
 
+resource "azurerm_virtual_machine_extension" "avd_dsc" {
+  name                       = "vm0-avd-dsc"
+  virtual_machine_id         = azurerm_windows_virtual_machine.vm.id
+  publisher                  = "Microsoft.Powershell"
+  type                       = "DSC"
+  type_handler_version       = "2.73"
+  auto_upgrade_minor_version = true
 
-resource "azurerm_virtual_desktop_workspace_application_group_association" "dag_workspace_assoc" {
-  workspace_id         = azurerm_virtual_desktop_workspace.workspace.id
-  application_group_id = azurerm_virtual_desktop_application_group.dag.id
+  settings = <<SETTINGS
+  {
+    "modulesUrl": "https://wvdportalstorageblob.blob.core.windows.net/galleryartifacts/Configuration_09-08-2022.zip",
+    "configurationFunction": "Configuration.ps1\\AddSessionHost",
+    "properties": {
+      "HostPoolName": "${azurerm_virtual_desktop_host_pool.hostpool.name}"
+    }
+  }
+SETTINGS
+
+  protected_settings = <<PROTECTED_SETTINGS
+  {
+    "properties": {
+      "registrationInfoToken": "${azurerm_virtual_desktop_host_pool_registration_info.registration.token}"
+    }
+  }
+PROTECTED_SETTINGS
+
+  depends_on = [azurerm_virtual_desktop_host_pool.hostpool]
 }
+
+
 
 
 resource "azurerm_log_analytics_workspace" "avd_logs" {
@@ -220,7 +245,10 @@ resource "azurerm_monitor_metric_alert" "avd_cpu_alert" {
 
 }
 
-
+resource "azurerm_virtual_desktop_workspace_application_group_association" "dag_workspace_assoc" {
+  workspace_id         = azurerm_virtual_desktop_workspace.workspace.id
+  application_group_id = azurerm_virtual_desktop_application_group.dag.id
+}
 #### FSLOGIX ####
 
 resource "azurerm_storage_account" "fslogix_storage" {
