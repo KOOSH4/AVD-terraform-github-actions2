@@ -65,3 +65,7 @@ variable "workspace_name" {
   type        = string
   description = "Name of the AVD Workspace"
 }
+variable "host_pool_name" {
+  description = "The name of the AVD Host Pool"
+  type        = string
+}
