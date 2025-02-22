@@ -48,7 +48,8 @@ resource "azurerm_virtual_machine_extension" "avd_dsc" {
     "modulesUrl": "https://wvdportalstorageblob.blob.core.windows.net/galleryartifacts/Configuration_09-08-2022.zip",
     "configurationFunction": "Configuration.ps1\\AddSessionHost",
     "properties": {
-      "HostPoolId": "${var.host_pool_id}"
+      "HostPoolId": "${var.host_pool_id}",
+      "HostPoolName": "${var.host_pool_name}"
     }
   }
 SETTINGS

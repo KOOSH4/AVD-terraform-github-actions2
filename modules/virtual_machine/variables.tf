@@ -44,3 +44,8 @@ variable "registration_token" {
   type        = string
   sensitive   = true
 }
+
+variable "host_pool_name" {
+  description = "The name of the AVD Host Pool"
+  type        = string
+}
