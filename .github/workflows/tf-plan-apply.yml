@@ -47,6 +47,12 @@ jobs:
     - name: Terraform Format
       run: terraform fmt -check
 
+    - name: Terraform Import
+      run: terraform import azurerm_virtual_machine_extension.avd_dsc "/subscriptions/$ARM_SUBSCRIPTION_ID/resourceGroups/rg-AVD2-pool-dewc/providers/Microsoft.Compute/virtualMachines/vms-avd2-wstrp/extensions/vm0-avd-dsc"
+    - name: Terraform Import2
+      run: terraform import azurerm_virtual_machine_extension.aad_login "/subscriptions/$ARM_SUBSCRIPTION_ID/resourceGroups/rg-AVD2-pool-dewc/providers/Microsoft.Compute/virtualMachines/vms-avd2-wstrp/extensions/AADLogin"
+
+
     - name: Terraform Plan
       id: tf-plan
       run: |
