@@ -225,11 +225,13 @@ resource "azurerm_virtual_machine_extension" "FSLogixConfig" {
   type                 = "CustomScriptExtension"
   type_handler_version = "1.10"
 
-  settings = jsonencode({
+settings = jsonencode({
+  "fileUris": [
+    "https://raw.githubusercontent.com/acapodil/Azure-Virtual-Desktop/main/Scripts/customScriptTerraform.ps1"
+  ],
+  "commandToExecute": "powershell -ExecutionPolicy Unrestricted -File customScriptTerraform.ps1 ${azurerm_storage_account.FSLogixStorageAccount.name}"
+})
 
-    "fileUris" : ["https://raw.githubusercontent.com/acapodil/Azure-Virtual-Desktop/main/Scripts/customScriptTerraform.ps1"]
-    "commandToExecute" : "powershell -ExecutionPolicy Unrestricted -File customScriptTerraform.ps1 ${azurerm_storage_account.FSLogixStorageAccount.name}"
-  })
 
   depends_on = [
     azurerm_virtual_machine_extension.AADLoginForWindows
