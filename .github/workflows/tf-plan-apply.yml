@@ -48,9 +48,7 @@ jobs:
       run: terraform fmt -check
 
     - name: Terraform Import
-      run: terraform import azurerm_virtual_machine_extension.FSLogixConfig[0] "/subscriptions/$ARM_SUBSCRIPTION_ID/resourceGroups/rg-AVD2-pool-dewc/providers/Microsoft.Compute/virtualMachines/vm-avd-h1-01/extensions/FSLogixConfig-0"
-    - name: Terraform Import
-      run: terraform import azurerm_virtual_machine_extension.FSLogixConfig[1] "/subscriptions/*****/resourceGroups/rg-AVD2-pool-dewc/providers/Microsoft.Compute/virtualMachines/vm-avd-h1-02/extensions/FSLogixConfig-1"
+      run: terraform import azurerm_virtual_machine_extension.FSLogixConfig[1] "/subscriptions/$ARM_SUBSCRIPTION_ID/resourceGroups/rg-AVD2-pool-dewc/providers/Microsoft.Compute/virtualMachines/vm-avd-h1-02/extensions/FSLogixConfig-1"
 
 
 
