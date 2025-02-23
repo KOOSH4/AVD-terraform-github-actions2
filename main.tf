@@ -217,12 +217,21 @@ resource "azurerm_storage_share" "AVDProfileShare" {
 }
 
 
-resource "null_resource" "FSLogix" {
-  count = var.NumberOfSessionHosts
-  provisioner "local-exec" {
-    command     = "az vm run-command invoke --command-id RunPowerShellScript --name ${azurerm_windows_virtual_machine.main[count.index].name} -g ${azurerm_resource_group.rg-AVD2.name} --scripts 'New-ItemProperty -Path HKLM:\\SOFTWARE\\FSLogix\\Profiles -Name VHDLocations -Value \\\\cloudninjafsl11072022.file.core.windows.net\\avdprofiles -PropertyType MultiString; ...; Restart-Computer'"
-    interpreter = ["powershell.exe", "-Command"]
-  }
+resource "azurerm_virtual_machine_extension" "FSLogixConfig" {
+  count                = var.NumberOfSessionHosts
+  name                 = "FSLogixConfig-${count.index}"
+  virtual_machine_id   = element(azurerm_windows_virtual_machine.main.*.id, count.index)
+  publisher            = "Microsoft.Compute"
+  type                 = "CustomScriptExtension"
+  type_handler_version = "1.10"
+
+  settings = <<SETTINGS
+{
+  "fileUris": ["https://path/to/your/script.ps1"],
+  "commandToExecute": "powershell -ExecutionPolicy Unrestricted -File script.ps1"
+}
+SETTINGS
+
   depends_on = [
     azurerm_virtual_machine_extension.AADLoginForWindows
   ]
