@@ -219,10 +219,10 @@ resource "azurerm_storage_share" "AVDProfileShare" {
 
 resource "null_resource" "FSLogix" {
   count = var.NumberOfSessionHosts
-  provisioner "local-exec" {
-    command     = "az vm run-command invoke --command-id RunPowerShellScript --name ${element(azurerm_windows_virtual_machine.main.*.name, count.index)} -g ${azurerm_resource_group.rg-AVD2.name} --scripts 'New-ItemProperty -Path HKLM:\\SOFTWARE\\FSLogix\\Profiles -Name VHDLocations -Value \\\\cloudninjafsl11072022.file.core.windows.net\\avdprofiles -PropertyType MultiString;New-ItemProperty -Path HKLM:\\SOFTWARE\\FSLogix\\Profiles -Name Enabled -Value 1 -PropertyType DWORD;New-ItemProperty -Path HKLM:\\SYSTEM\\CurrentControlSet\\Control\\Lsa\\Kerberos\\Parameters -Name CloudKerberosTicketRetrievalEnabled -Value 1 -PropertyType DWORD;New-Item -Path HKLM:\\Software\\Policies\\Microsoft\\ -Name AzureADAccount;New-ItemProperty -Path HKLM:\\Software\\Policies\\Microsoft\\AzureADAccount  -Name LoadCredKeyFromProfile -Value 1 -PropertyType DWORD;Restart-Computer'"
-    interpreter = ["PowerShell", "-Command"]
-  }
+provisioner "local-exec" {
+  command = "az vm run-command invoke --command-id RunPowerShellScript --name ${azurerm_windows_virtual_machine.main[count.index].name} -g ${azurerm_resource_group.rg-AVD2.name} --scripts 'New-ItemProperty -Path HKLM:\\SOFTWARE\\FSLogix\\Profiles -Name VHDLocations -Value \\\\cloudninjafsl11072022.file.core.windows.net\\avdprofiles -PropertyType MultiString; ...; Restart-Computer'"
+  interpreter = ["powershell.exe", "-Command"]
+}
   depends_on = [
     azurerm_virtual_machine_extension.AADLoginForWindows
   ]
