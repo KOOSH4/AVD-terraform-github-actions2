@@ -228,7 +228,7 @@ resource "azurerm_virtual_machine_extension" "FSLogixConfig" {
   settings = jsonencode({
 
     "fileUris" : ["https://raw.githubusercontent.com/acapodil/Azure-Virtual-Desktop/main/Scripts/customScriptTerraform.ps1"]
-    "commandToExecute" : "powershell -ExecutionPolicy Unrestricted -File customScriptTerraform.ps1 ${azurerm_storage_account.storage.name}"
+    "commandToExecute" : "powershell -ExecutionPolicy Unrestricted -File customScriptTerraform.ps1 ${azurerm_storage_account.FSLogixStorageAccount.name}"
   })
 
   depends_on = [
