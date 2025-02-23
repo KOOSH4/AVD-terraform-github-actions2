@@ -204,7 +204,7 @@ resource "azurerm_storage_account" "FSLogixStorageAccount" {
   name                     = "fslogixavdeuw1"
   location                 = azurerm_resource_group.rg-AVD2.location
   resource_group_name      = azurerm_resource_group.rg-AVD2.name
-  account_tier             = "Standard"
+  account_tier             = "Premium"
   account_replication_type = "LRS"
   account_kind             = "FileStorage"
 }
