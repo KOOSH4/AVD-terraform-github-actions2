@@ -50,9 +50,6 @@ jobs:
     - name: Terraform Import
       run: terraform import azurerm_virtual_machine_extension.FSLogixConfig[1] "/subscriptions/$ARM_SUBSCRIPTION_ID/resourceGroups/rg-AVD2-pool-dewc/providers/Microsoft.Compute/virtualMachines/vm-avd-h1-02/extensions/FSLogixConfig-1"
 
-
-
-
     - name: Terraform Plan
       id: tf-plan
       run: |
