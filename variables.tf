@@ -56,7 +56,11 @@ variable "hostpool_name" {
   description = "Name of the AVD Host Pool"
 }
 
-variable "application_group_name" {
+variable "application_group_name_desktopapp" {
+  type        = string
+  description = "Name of the AVD Application Group"
+}
+variable "application_group_name_remoteapp" {
   type        = string
   description = "Name of the AVD Application Group"
 }
@@ -64,4 +68,35 @@ variable "application_group_name" {
 variable "workspace_name" {
   type        = string
   description = "Name of the AVD Workspace"
+}
+
+
+#########
+variable "NumberOfSessionHosts" {
+  type    = number
+  default = 2
+}
+
+variable "vm_prefix" {
+  type    = string
+  default = "avd-h1"
+}
+
+variable "avd_vnet" {
+  type    = string
+  default = "vnet-avd-001"
+}
+variable "avd_vnet_resource_group" {
+  type    = string
+  default = "rg-avd-network-001"
+}
+variable "avd_hostpool_subnet" {
+  type    = string
+  default = "snet-avd-hostpool-001"
+}
+
+variable "avd_Location" {
+  description = "Azure region for resources"
+  type        = string
+  default     = "westeurope"
 }
