@@ -56,14 +56,6 @@ variable "hostpool_name" {
   description = "Name of the AVD Host Pool"
 }
 
-variable "application_group_name_desktopapp" {
-  type        = string
-  description = "Name of the AVD Application Group"
-}
-variable "application_group_name_remoteapp" {
-  type        = string
-  description = "Name of the AVD Application Group"
-}
 
 variable "workspace_name" {
   type        = string
@@ -99,4 +91,14 @@ variable "avd_Location" {
   description = "Azure region for resources"
   type        = string
   default     = "westeurope"
+}
+
+variable "application_group_name_desktopapp" {
+  description = "Name of the AVD Application Group for Desktop Apps"
+  type        = string
+}
+
+variable "application_group_name_remoteapp" {
+  description = "Name of the AVD Application Group for Remote Apps"
+  type        = string
 }
