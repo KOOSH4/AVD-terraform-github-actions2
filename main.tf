@@ -210,7 +210,7 @@ resource "azurerm_storage_account" "FSLogixStorageAccount" {
 }
 
 resource "azurerm_storage_share" "AVDProfileShare" {
-  name               = "avdprofiles"
+  name               = "userprofiles"
   storage_account_id = azurerm_storage_account.FSLogixStorageAccount.id
   quota              = 100
 
