@@ -273,42 +273,16 @@ resource "azurerm_monitor_diagnostic_setting" "avd_vm_diag" {
     azurerm_log_analytics_workspace.avd_logs
   ]
 }
-# Storage Account Diagnostic Settings
-resource "azurerm_monitor_diagnostic_setting" "avd_storage_diag" {
-  name                       = "diag-avd-storage"
-  target_resource_id         = azurerm_storage_account.FSLogixStorageAccount.id
+resource "azurerm_monitor_diagnostic_setting" "avd_fileshare_diag" {
+  name                       = "examplediagsettingfile"
+  target_resource_id         = azurerm_storage_share.AVDProfileShare.id
+  storage_account_id         = azurerm_storage_account.FSLogixStorageAccount.id
   log_analytics_workspace_id = azurerm_log_analytics_workspace.avd_logs.id
-
   enabled_log {
-    category_group = "audit" # Changed from individual category to category_group
+    category = "StorageWrite"
   }
-
-  enabled_log {
-    category_group = "allLogs" # Added allLogs category group
-  }
-
-  metric {
-    category = "Transaction"
-    enabled  = true
-  }
-
-  depends_on = [azurerm_storage_account.FSLogixStorageAccount, azurerm_log_analytics_workspace.avd_logs]
 }
 
-# Host Pool Diagnostic Settings
-resource "azurerm_monitor_diagnostic_setting" "avd_hostpool_diag" {
-  name                       = "diag-avd-hostpool"
-  target_resource_id         = azurerm_virtual_desktop_host_pool.hostpool.id
-  log_analytics_workspace_id = azurerm_log_analytics_workspace.avd_logs.id
-
-  enabled_log {
-    category_group = "audit" # Changed from individual category to category_group
-  }
-
-  # Removed the metrics block since it's not supported for this resource type
-
-  depends_on = [azurerm_windows_virtual_machine.main, azurerm_log_analytics_workspace.avd_logs]
-}
 resource "azurerm_monitor_metric_alert" "avd_cpu_alert" {
   // Alert name and associated resource group
   name                = "avd-vm-high-cpu"
