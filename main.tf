@@ -236,3 +236,119 @@ resource "azurerm_virtual_machine_extension" "FSLogixConfig" {
   ]
 }
 
+
+
+resource "azurerm_log_analytics_workspace" "avd_logs" {
+  name                = "law-avd-logs"
+  location            = var.location
+  resource_group_name = azurerm_resource_group.rg-AVD2.name
+  sku                 = "PerGB2018"
+  retention_in_days   = 30
+}
+
+// This resource now uses count to iterate over all virtual machines defined
+// in azurerm_windows_virtual_machine.main, creating a diagnostic setting for each.
+// Each setting sends "AllMetrics" data to the specified Log Analytics Workspace.
+resource "azurerm_monitor_diagnostic_setting" "avd_vm_diag" {
+  count = length(azurerm_windows_virtual_machine.main)
+
+  // Unique name for each diagnostic setting resource
+  name = "diag-avd-vm-${count.index + 1}"
+
+  // Target VM for which diagnostics are captured
+  target_resource_id = azurerm_windows_virtual_machine.main[count.index].id
+
+  // Reference to the Log Analytics Workspace for sending diagnostic data
+  log_analytics_workspace_id = azurerm_log_analytics_workspace.avd_logs.id
+
+  // Configure metrics collection for all available metrics
+  metric {
+    category = "AllMetrics"
+    enabled  = true
+  }
+
+  // Ensure the diagnostic settings are applied after the VMs and the workspace are created
+  depends_on = [
+    azurerm_windows_virtual_machine.main,
+    azurerm_log_analytics_workspace.avd_logs
+  ]
+}
+#enable diagnostic settings for storage account and fileshare
+resource "azurerm_monitor_diagnostic_setting" "avd_storage_diag" {
+  name                       = "diag-avd-storage"
+  target_resource_id         = azurerm_storage_account.FSLogixStorageAccount.id
+  log_analytics_workspace_id = azurerm_log_analytics_workspace.avd_logs.id
+
+  enabled_log { category = "StorageFileShare" }
+  enabled_log { category = "StorageBlob" }
+  enabled_log { category = "StorageQueue" }
+  enabled_log { category = "StorageTable" }
+
+  metric {
+    category = "AllMetrics"
+  }
+
+  depends_on = [azurerm_storage_account.FSLogixStorageAccount, azurerm_log_analytics_workspace.avd_logs]
+}
+
+resource "azurerm_monitor_diagnostic_setting" "avd_hostpool_diag" {
+  name                       = "diag-avd-hostpool"
+  target_resource_id         = azurerm_virtual_desktop_host_pool.hostpool.id
+  log_analytics_workspace_id = azurerm_log_analytics_workspace.avd_logs.id
+
+  enabled_log { category = "Checkpoint" }
+  enabled_log { category = "Error" }
+  enabled_log { category = "Management" }
+  enabled_log { category = "Connection" }
+  enabled_log { category = "HostRegistration" }
+  enabled_log { category = "AgentHealthStatus" }
+  enabled_log { category = "NetworkData" }
+  enabled_log { category = "ConnectionGraphicsData" }
+  enabled_log { category = "SessionHostManagement" }
+  enabled_log { category = "AutoscaleEvaluationPooled" }
+  enabled_log { category = "AutoscaleEvaluationPersonal" }
+
+
+  metric {
+    category = "AllMetrics"
+  }
+
+
+  depends_on = [azurerm_windows_virtual_machine.vm, azurerm_log_analytics_workspace.avd_logs]
+
+}
+resource "azurerm_monitor_metric_alert" "avd_cpu_alert" {
+  // Alert name and associated resource group
+  name                = "avd-vm-high-cpu"
+  resource_group_name = azurerm_resource_group.rg-AVD2.name
+
+  // Apply alert to all VMs by referencing the list of VM ids using the splat operator
+  scopes = azurerm_windows_virtual_machine.main[*].id
+
+  // Description explains when the alert is triggered
+  description = "Alert when average CPU usage on all AVD VMs exceeds 80% for 5 minutes."
+
+  // Severity, window size, and frequency settings for the alert
+  severity    = 2
+  window_size = "PT5M"
+  frequency   = "PT1M"
+
+  // Target resource configuration for alert evaluation
+  target_resource_type     = "Microsoft.Compute/virtualMachines"
+  target_resource_location = var.location
+
+  // Criteria block defines the CPU metric threshold and aggregation method
+  criteria {
+    metric_namespace = "Microsoft.Compute/virtualMachines"
+    metric_name      = "Percentage CPU"
+    aggregation      = "Average"
+    operator         = "GreaterThan"
+    threshold        = 80
+  }
+
+  // Ensure dependencies are created before the metric alert
+  depends_on = [
+    azurerm_windows_virtual_machine.main,
+    azurerm_log_analytics_workspace.avd_logs
+  ]
+}
