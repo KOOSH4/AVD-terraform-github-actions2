@@ -273,48 +273,41 @@ resource "azurerm_monitor_diagnostic_setting" "avd_vm_diag" {
     azurerm_log_analytics_workspace.avd_logs
   ]
 }
-#enable diagnostic settings for storage account and fileshare
+# Storage Account Diagnostic Settings
 resource "azurerm_monitor_diagnostic_setting" "avd_storage_diag" {
   name                       = "diag-avd-storage"
   target_resource_id         = azurerm_storage_account.FSLogixStorageAccount.id
   log_analytics_workspace_id = azurerm_log_analytics_workspace.avd_logs.id
 
   enabled_log {
-    category = "AuditEvent"
+    category_group = "audit" # Changed from individual category to category_group
+  }
+
+  enabled_log {
+    category_group = "allLogs" # Added allLogs category group
   }
 
   metric {
-    category = "AllMetrics"
+    category = "Transaction"
+    enabled  = true
   }
 
   depends_on = [azurerm_storage_account.FSLogixStorageAccount, azurerm_log_analytics_workspace.avd_logs]
 }
 
+# Host Pool Diagnostic Settings
 resource "azurerm_monitor_diagnostic_setting" "avd_hostpool_diag" {
   name                       = "diag-avd-hostpool"
   target_resource_id         = azurerm_virtual_desktop_host_pool.hostpool.id
   log_analytics_workspace_id = azurerm_log_analytics_workspace.avd_logs.id
 
-  enabled_log { category = "Checkpoint" }
-  enabled_log { category = "Error" }
-  enabled_log { category = "Management" }
-  enabled_log { category = "Connection" }
-  enabled_log { category = "HostRegistration" }
-  enabled_log { category = "AgentHealthStatus" }
-  enabled_log { category = "NetworkData" }
-  enabled_log { category = "ConnectionGraphicsData" }
-  enabled_log { category = "SessionHostManagement" }
-  enabled_log { category = "AutoscaleEvaluationPooled" }
-  enabled_log { category = "AutoscaleEvaluationPersonal" }
-
-
-  metric {
-    category = "AllMetrics"
+  enabled_log {
+    category_group = "audit" # Changed from individual category to category_group
   }
 
+  # Removed the metrics block since it's not supported for this resource type
 
   depends_on = [azurerm_windows_virtual_machine.main, azurerm_log_analytics_workspace.avd_logs]
-
 }
 resource "azurerm_monitor_metric_alert" "avd_cpu_alert" {
   // Alert name and associated resource group
