@@ -280,9 +280,6 @@ resource "azurerm_monitor_diagnostic_setting" "avd_storage_diag" {
   log_analytics_workspace_id = azurerm_log_analytics_workspace.avd_logs.id
 
   enabled_log { category = "StorageFileShare" }
-  enabled_log { category = "StorageBlob" }
-  enabled_log { category = "StorageQueue" }
-  enabled_log { category = "StorageTable" }
 
   metric {
     category = "AllMetrics"
