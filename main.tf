@@ -314,7 +314,7 @@ resource "azurerm_monitor_diagnostic_setting" "avd_hostpool_diag" {
   }
 
 
-  depends_on = [azurerm_windows_virtual_machine.vm, azurerm_log_analytics_workspace.avd_logs]
+  depends_on = [azurerm_windows_virtual_machine.main, azurerm_log_analytics_workspace.avd_logs]
 
 }
 resource "azurerm_monitor_metric_alert" "avd_cpu_alert" {
