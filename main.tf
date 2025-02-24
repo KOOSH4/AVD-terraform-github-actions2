@@ -279,7 +279,9 @@ resource "azurerm_monitor_diagnostic_setting" "avd_storage_diag" {
   target_resource_id         = azurerm_storage_account.FSLogixStorageAccount.id
   log_analytics_workspace_id = azurerm_log_analytics_workspace.avd_logs.id
 
-  enabled_log { category = "StorageFileShare" }
+  enabled_log {
+    category = "AuditEvent"
+  }
 
   metric {
     category = "AllMetrics"
