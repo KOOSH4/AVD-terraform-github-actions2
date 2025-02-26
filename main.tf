@@ -226,9 +226,9 @@ resource "azurerm_virtual_machine_extension" "FSLogixConfig" {
   type_handler_version = "1.10"
 
   settings = jsonencode({
-      "fileUris" : ["https://raw.githubusercontent.com/KOOSH4/FSLogix-_Powershell_silent_install/refs/heads/main/InstallFSLogixApps.ps1"],
-      "commandToExecute" : "powershell -ExecutionPolicy Unrestricted -File InstallFSLogixApps.ps1"
-    })
+    "fileUris" : ["https://raw.githubusercontent.com/KOOSH4/FSLogix-_Powershell_silent_install/refs/heads/main/InstallFSLogixApps.ps1"],
+    "commandToExecute" : "powershell -ExecutionPolicy Unrestricted -File InstallFSLogixApps.ps1"
+  })
 
   depends_on = [
     azurerm_virtual_machine_extension.AADLoginForWindows, azurerm_windows_virtual_machine.main, azurerm_storage_share.AVDProfileShare, azurerm_storage_account.FSLogixStorageAccount, azurerm_virtual_machine_extension.dsc
