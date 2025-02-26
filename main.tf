@@ -115,6 +115,8 @@ resource "azurerm_virtual_desktop_workspace_application_group_association" "desk
   depends_on           = [azurerm_virtual_desktop_workspace.workspace, azurerm_virtual_desktop_application_group]
 }
 
+
+
 resource "azurerm_virtual_desktop_workspace_application_group_association" "remoteapp" {
   workspace_id         = azurerm_virtual_desktop_workspace.workspace.id
   application_group_id = azurerm_virtual_desktop_application_group.ag-remoteapp.id
