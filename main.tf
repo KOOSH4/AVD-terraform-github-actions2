@@ -97,7 +97,7 @@ resource "azurerm_virtual_desktop_application_group" "ag-desktopapp" {
   resource_group_name = azurerm_resource_group.rg-AVD2.name
   type                = "Desktop"
   host_pool_id        = azurerm_virtual_desktop_host_pool.hostpool.id
-    depends_on = [ azurerm_virtual_desktop_host_pool.hostpool ]
+  depends_on          = [azurerm_virtual_desktop_host_pool.hostpool]
 
 }
 
@@ -105,9 +105,9 @@ resource "azurerm_virtual_desktop_application_group" "ag-remoteapp" {
   name                = var.application_group_name_remoteapp
   location            = azurerm_resource_group.rg-AVD2.location
   resource_group_name = azurerm_resource_group.rg-AVD2.name
-  type         = "RemoteApp"
-  host_pool_id = azurerm_virtual_desktop_host_pool.hostpool.id
-  depends_on = [ azurerm_virtual_desktop_host_pool.hostpool ]
+  type                = "RemoteApp"
+  host_pool_id        = azurerm_virtual_desktop_host_pool.hostpool.id
+  depends_on          = [azurerm_virtual_desktop_host_pool.hostpool]
 }
 resource "azurerm_virtual_desktop_workspace_application_group_association" "desktopapp" {
   workspace_id         = azurerm_virtual_desktop_workspace.workspace.id
@@ -118,7 +118,7 @@ resource "azurerm_virtual_desktop_workspace_application_group_association" "desk
 resource "azurerm_virtual_desktop_workspace_application_group_association" "remoteapp" {
   workspace_id         = azurerm_virtual_desktop_workspace.workspace.id
   application_group_id = azurerm_virtual_desktop_application_group.ag-remoteapp.id
-  depends_on           = [azurerm_virtual_desktop_workspace.workspace , azurerm_virtual_desktop_application_group]
+  depends_on           = [azurerm_virtual_desktop_workspace.workspace, azurerm_virtual_desktop_application_group]
 }
 
 resource "azurerm_virtual_desktop_host_pool_registration_info" "registrationkey" {
