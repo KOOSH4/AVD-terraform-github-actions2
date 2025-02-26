@@ -112,15 +112,18 @@ resource "azurerm_virtual_desktop_application_group" "ag-remoteapp" {
 resource "azurerm_virtual_desktop_workspace_application_group_association" "desktopapp" {
   workspace_id         = azurerm_virtual_desktop_workspace.workspace.id
   application_group_id = azurerm_virtual_desktop_application_group.ag-desktopapp.id
-  depends_on           = [azurerm_virtual_desktop_workspace.workspace, azurerm_virtual_desktop_application_group]
+  depends_on = [
+    azurerm_virtual_desktop_workspace.workspace,
+    azurerm_virtual_desktop_application_group.ag-desktopapp
+  ]
 }
-
-
-
 resource "azurerm_virtual_desktop_workspace_application_group_association" "remoteapp" {
   workspace_id         = azurerm_virtual_desktop_workspace.workspace.id
   application_group_id = azurerm_virtual_desktop_application_group.ag-remoteapp.id
-  depends_on           = [azurerm_virtual_desktop_workspace.workspace, azurerm_virtual_desktop_application_group]
+  depends_on = [
+    azurerm_virtual_desktop_workspace.workspace,
+    azurerm_virtual_desktop_application_group.ag-remoteapp
+  ]
 }
 
 resource "azurerm_virtual_desktop_host_pool_registration_info" "registrationkey" {
