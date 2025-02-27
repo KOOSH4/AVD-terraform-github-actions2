@@ -42,13 +42,6 @@ jobs:
       with:
         terraform_wrapper: false
 
-    - name: Terraform Init
-      run: terraform init
-    - name: Terraform Import
-      run:  terraform import azurerm_virtual_machine_extension.FSLogixConfig[1] /subscriptions/$ARM_SUBSCRIPTION_ID/resourceGroups/rg-AVD2-pool-dewc/providers/Microsoft.Compute/virtualMachines/vm-avd-h1-02/extensions/FSLogixConfig-1
-
-
-      # Import the first FSLogix extension
 
 # Import the second FSLogix extension
     - name: Terraform Format
