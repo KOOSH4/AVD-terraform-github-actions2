@@ -45,12 +45,6 @@ variable "admin_password" {
   sensitive   = true
 }
 
-variable "StorageAccAccesskeys" {
-  type        = string
-  description = "Storage Account Access Key"
-  sensitive   = true
-}
-
 variable "subscription_id" {
   type        = string
   description = "subscription id"
