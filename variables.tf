@@ -66,7 +66,7 @@ variable "workspace_name" {
 #########
 variable "NumberOfSessionHosts" {
   type    = number
-  default = 2
+  default = 1
 }
 
 variable "vm_prefix" {
