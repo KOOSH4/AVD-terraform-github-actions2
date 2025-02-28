@@ -288,7 +288,7 @@ resource "azurerm_virtual_machine_extension" "FSLogixConfig" {
   type_handler_version = "1.10"
 
   protected_settings = jsonencode({
-    "commandToExecute" : "powershell -ExecutionPolicy Unrestricted -File InstallFSLogixApps.ps1 -storageAccountName '${azurerm_storage_account.FSLogixStorageAccount.name}' -fileShareName '${azurerm_storage_share.AVDProfileShare.name}' -secret '${azurerm_storage_account.FSLogixStorageAccount.primary_access_key}'"
+    "commandToExecute" : "powershell -ExecutionPolicy Unrestricted -File InstallFSLogixApps.ps1 -storageAccountName '${azurerm_storage_account.FSLogixStorageAccount.name}' -fileShareName '${azurerm_storage_share.AVDProfileShare.name}' -secret '${azurerm_storage_account.FSLogixStorageAccount.primary_access_key}'",
     "fileUris" : ["https://raw.githubusercontent.com/KOOSH4/FSLogix-_Powershell_silent_install/refs/heads/main/InstallFSLogixApps.ps1"]
   })
 
@@ -300,6 +300,7 @@ resource "azurerm_virtual_machine_extension" "FSLogixConfig" {
     azurerm_virtual_machine_extension.dsc
   ]
 }
+
 
 # Create a storage account for FSLogix profile storage
 resource "azurerm_storage_account" "FSLogixStorageAccount" {
