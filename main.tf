@@ -33,6 +33,7 @@ resource "azurerm_resource_group" "rg-AVD2" {
   }
 }
 
+
 # Create a storage account for FSLogix profile storage
 resource "azurerm_storage_account" "FSLogixStorageAccount" {
   name                     = "fslogixavdeuw1"
