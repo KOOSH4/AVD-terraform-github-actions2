@@ -23,37 +23,77 @@ provider "azurerm" {
   }
 }
 
-# Define any Azure resources to be created here. A simple resource group is shown here as a minimal example.
-resource "azurerm_resource_group" "rg-AVD2" {
-  name     = var.resource_group_name
+# Resource Groups
+resource "azurerm_resource_group" "rg_avd_service" {
+  name     = "rg-AVD-Service-wstrp"
   location = var.location
   tags = {
+    Purpose  = "AVD Service Components"
     Location = var.location
     Owner    = "Olad, Koosha"
   }
 }
 
+resource "azurerm_resource_group" "rg_session_hosts" {
+  name     = "rg-AVD-SessionHosts-wstrp"
+  location = var.location
+  tags = {
+    Purpose  = "AVD Session Hosts"
+    Location = var.location
+    Owner    = "Olad, Koosha"
+  }
+}
 
+resource "azurerm_resource_group" "rg_network" {
+  name     = "rg-AVD-Network-wstrp"
+  location = var.location
+  tags = {
+    Purpose  = "AVD Networking"
+    Location = var.location
+    Owner    = "Olad, Koosha"
+  }
+}
+
+resource "azurerm_resource_group" "rg_storage" {
+  name     = "rg-AVD-Storage-wstrp"
+  location = var.location
+  tags = {
+    Purpose  = "AVD Storage"
+    Location = var.location
+    Owner    = "Olad, Koosha"
+  }
+}
+
+resource "azurerm_resource_group" "rg_monitoring" {
+  name     = "rg-AVD-Monitoring-wstrp"
+  location = var.location
+  tags = {
+    Purpose  = "AVD Monitoring"
+    Location = var.location
+    Owner    = "Olad, Koosha"
+  }
+}
+
+# Networking Resources
 resource "azurerm_virtual_network" "vnet" {
   name                = var.vnet_name
-  location            = azurerm_resource_group.rg-AVD2.location
-  resource_group_name = azurerm_resource_group.rg-AVD2.name
+  location            = azurerm_resource_group.rg_network.location
+  resource_group_name = azurerm_resource_group.rg_network.name
   address_space       = ["10.0.0.0/16"]
 }
 
 resource "azurerm_subnet" "subnets" {
   name                 = "default"
-  resource_group_name  = azurerm_resource_group.rg-AVD2.name
+  resource_group_name  = azurerm_resource_group.rg_network.name
   virtual_network_name = azurerm_virtual_network.vnet.name
   address_prefixes     = ["10.0.0.0/24"]
 }
-
 
 resource "azurerm_network_interface" "main" {
   count               = var.NumberOfSessionHosts
   name                = "nic-${var.vm_prefix}-${format("%02d", count.index + 1)}"
   location            = var.avd_Location
-  resource_group_name = azurerm_resource_group.rg-AVD2.name
+  resource_group_name = azurerm_resource_group.rg_network.name
 
   ip_configuration {
     name                          = "ipconfig"
@@ -62,6 +102,117 @@ resource "azurerm_network_interface" "main" {
   }
 }
 
+# AVD Service Resources
+resource "azurerm_virtual_desktop_host_pool" "hostpool" {
+  name                     = var.hostpool_name
+  location                 = azurerm_resource_group.rg_avd_service.location
+  resource_group_name      = azurerm_resource_group.rg_avd_service.name
+  type                     = "Pooled"
+  maximum_sessions_allowed = 6
+  load_balancer_type       = "DepthFirst"
+}
+
+resource "azurerm_virtual_desktop_workspace" "workspace" {
+  name                = var.workspace_name
+  location            = azurerm_resource_group.rg_avd_service.location
+  resource_group_name = azurerm_resource_group.rg_avd_service.name
+  depends_on          = [azurerm_virtual_desktop_host_pool.hostpool]
+}
+
+resource "azurerm_virtual_desktop_application_group" "ag-desktopapp" {
+  name                = var.application_group_name_desktopapp
+  location            = azurerm_resource_group.rg_avd_service.location
+  resource_group_name = azurerm_resource_group.rg_avd_service.name
+  type                = "Desktop"
+  host_pool_id        = azurerm_virtual_desktop_host_pool.hostpool.id
+  depends_on          = [azurerm_virtual_desktop_host_pool.hostpool]
+}
+
+resource "azurerm_virtual_desktop_application_group" "ag-remoteapp" {
+  name                = var.application_group_name_remoteapp
+  location            = azurerm_resource_group.rg_avd_service.location
+  resource_group_name = azurerm_resource_group.rg_avd_service.name
+  type                = "RemoteApp"
+  host_pool_id        = azurerm_virtual_desktop_host_pool.hostpool.id
+  depends_on          = [azurerm_virtual_desktop_host_pool.hostpool]
+}
+
+# Session Host Resources
+resource "azurerm_windows_virtual_machine" "main" {
+  count                 = var.NumberOfSessionHosts
+  name                  = "vm-${var.vm_prefix}-${format("%02d", count.index + 1)}"
+  location              = var.avd_Location
+  resource_group_name   = azurerm_resource_group.rg_session_hosts.name
+  network_interface_ids = [azurerm_network_interface.main[count.index].id]
+  size                  = "Standard_D2s_v3"
+  license_type          = "Windows_Client"
+  admin_username        = var.admin_username
+  admin_password        = var.admin_password
+
+  identity {
+    type = "SystemAssigned"
+  }
+
+  source_image_reference {
+    publisher = "microsoftwindowsdesktop"
+    offer     = "office-365"
+    sku       = "win11-21h2-avd-m365"
+    version   = "latest"
+  }
+
+  os_disk {
+    name                 = "vm-${var.vm_prefix}-${format("%02d", count.index + 1)}-osdisk"
+    caching              = "ReadWrite"
+    storage_account_type = "StandardSSD_LRS"
+  }
+
+  depends_on = [
+    azurerm_virtual_desktop_host_pool.hostpool,
+    azurerm_network_interface.main,
+    azurerm_virtual_desktop_host_pool_registration_info.registrationkey
+  ]
+}
+
+# Storage Resources
+resource "azurerm_storage_account" "FSLogixStorageAccount" {
+  name                     = lower(replace(var.storage_account_name, "-", ""))
+  resource_group_name      = azurerm_resource_group.rg_storage.name
+  location                 = azurerm_resource_group.rg_storage.location
+  account_tier             = "Standard"
+  account_replication_type = "LRS"
+  account_kind             = "StorageV2"
+
+  large_file_share_enabled = true
+}
+
+resource "azurerm_storage_share" "AVDProfileShare" {
+  name               = "profiles"
+  storage_account_id = azurerm_storage_account.FSLogixStorageAccount.id
+  quota              = 100
+}
+
+# Monitoring Resources
+resource "azurerm_log_analytics_workspace" "avd_logs" {
+  name                = "law-avd-logs"
+  location            = azurerm_resource_group.rg_monitoring.location
+  resource_group_name = azurerm_resource_group.rg_monitoring.name
+  sku                 = "PerGB2018"
+  retention_in_days   = 30
+}
+
+resource "azurerm_monitor_diagnostic_setting" "avd_vm_diag" {
+  count                      = length(azurerm_windows_virtual_machine.main)
+  name                       = "diag-avd-vm-${count.index + 1}"
+  target_resource_id         = azurerm_windows_virtual_machine.main[count.index].id
+  log_analytics_workspace_id = azurerm_log_analytics_workspace.avd_logs.id
+
+  metric {
+    category = "AllMetrics"
+    enabled  = true
+  }
+}
+
+# VM Extensions
 resource "azurerm_virtual_machine_extension" "AADLoginForWindows" {
   count                      = var.NumberOfSessionHosts
   name                       = "AADLoginForWindows"
@@ -72,105 +223,11 @@ resource "azurerm_virtual_machine_extension" "AADLoginForWindows" {
   auto_upgrade_minor_version = true
 }
 
-
-resource "azurerm_virtual_desktop_host_pool" "hostpool" {
-  name                     = var.hostpool_name
-  location                 = azurerm_resource_group.rg-AVD2.location
-  resource_group_name      = azurerm_resource_group.rg-AVD2.name
-  type                     = "Pooled"
-  maximum_sessions_allowed = 6
-  load_balancer_type       = "DepthFirst"
-}
-
-
-resource "azurerm_virtual_desktop_workspace" "workspace" {
-  name                = var.workspace_name
-  location            = azurerm_resource_group.rg-AVD2.location
-  resource_group_name = azurerm_resource_group.rg-AVD2.name
-  depends_on          = [azurerm_virtual_desktop_host_pool.hostpool]
-}
-
-
-resource "azurerm_virtual_desktop_application_group" "ag-desktopapp" {
-  name                = var.application_group_name_desktopapp
-  location            = azurerm_resource_group.rg-AVD2.location
-  resource_group_name = azurerm_resource_group.rg-AVD2.name
-  type                = "Desktop"
-  host_pool_id        = azurerm_virtual_desktop_host_pool.hostpool.id
-  depends_on          = [azurerm_virtual_desktop_host_pool.hostpool]
-
-}
-
-resource "azurerm_virtual_desktop_application_group" "ag-remoteapp" {
-  name                = var.application_group_name_remoteapp
-  location            = azurerm_resource_group.rg-AVD2.location
-  resource_group_name = azurerm_resource_group.rg-AVD2.name
-  type                = "RemoteApp"
-  host_pool_id        = azurerm_virtual_desktop_host_pool.hostpool.id
-  depends_on          = [azurerm_virtual_desktop_host_pool.hostpool]
-}
-resource "azurerm_virtual_desktop_workspace_application_group_association" "desktopapp" {
-  workspace_id         = azurerm_virtual_desktop_workspace.workspace.id
-  application_group_id = azurerm_virtual_desktop_application_group.ag-desktopapp.id
-  depends_on = [
-    azurerm_virtual_desktop_workspace.workspace,
-    azurerm_virtual_desktop_application_group.ag-desktopapp
-  ]
-}
-resource "azurerm_virtual_desktop_workspace_application_group_association" "remoteapp" {
-  workspace_id         = azurerm_virtual_desktop_workspace.workspace.id
-  application_group_id = azurerm_virtual_desktop_application_group.ag-remoteapp.id
-  depends_on = [
-    azurerm_virtual_desktop_workspace.workspace,
-    azurerm_virtual_desktop_application_group.ag-remoteapp
-  ]
-}
-
 resource "azurerm_virtual_desktop_host_pool_registration_info" "registrationkey" {
   hostpool_id     = azurerm_virtual_desktop_host_pool.hostpool.id
   expiration_date = timeadd(timestamp(), "180m")
-  depends_on      = [azurerm_virtual_desktop_host_pool.hostpool]
 }
 
-
-
-## Create the session hosts (VMs) for the host pool
-resource "azurerm_windows_virtual_machine" "main" {
-  count                 = var.NumberOfSessionHosts
-  name                  = "vm-${var.vm_prefix}-${format("%02d", count.index + 1)}"
-  location              = var.avd_Location
-  resource_group_name   = azurerm_resource_group.rg-AVD2.name
-  network_interface_ids = [azurerm_network_interface.main[count.index].id]
-  size                  = "Standard_D2s_v3"
-  license_type          = "Windows_Client"
-  admin_username        = var.admin_username
-  admin_password        = var.admin_password
-
-  additional_capabilities {
-  }
-  identity {
-    type = "SystemAssigned"
-  }
-  source_image_reference {
-    offer     = "office-365"
-    publisher = "microsoftwindowsdesktop"
-    sku       = "win11-21h2-avd-m365"
-    version   = "latest"
-  }
-  os_disk {
-    name                 = "vm-${var.vm_prefix}-${format("%02d", count.index + 1)}-osdisk"
-    caching              = "ReadWrite"
-    storage_account_type = "StandardSSD_LRS"
-  }
-  depends_on = [
-    azurerm_virtual_desktop_host_pool.hostpool, azurerm_network_interface.main, azurerm_virtual_desktop_host_pool_registration_info.registrationkey
-  ]
-}
-
-variable "avd_agent_location" {
-  type    = string
-  default = "https://wvdportalstorageblob.blob.core.windows.net/galleryartifacts/Configuration_06-15-2022.zip"
-}
 resource "azurerm_virtual_machine_extension" "dsc" {
   count                      = var.NumberOfSessionHosts
   name                       = "AddToAVD"
@@ -181,101 +238,22 @@ resource "azurerm_virtual_machine_extension" "dsc" {
   auto_upgrade_minor_version = true
 
   settings = <<SETTINGS
-            {
-                "modulesUrl": "${var.avd_agent_location}",
-                "configurationFunction": "Configuration.ps1\\AddSessionHost",            
-                "properties": {
-                    "hostPoolName": "${azurerm_virtual_desktop_host_pool.hostpool.name}",
-                    "aadJoin": true,
-                    "UseAgentDownloadEndpoint": true,
-                    "aadJoinPreview": false,
-                    "mdmId": "",
-                    "sessionHostConfigurationLastUpdateTime": "",
-                    "registrationInfoToken" : "${azurerm_virtual_desktop_host_pool_registration_info.registrationkey.token}" 
-                }
-            }
-            SETTINGS  
+    {
+        "modulesUrl": "${var.avd_agent_location}",
+        "configurationFunction": "Configuration.ps1\\AddSessionHost",            
+        "properties": {
+            "hostPoolName": "${azurerm_virtual_desktop_host_pool.hostpool.name}",
+            "aadJoin": true,
+            "UseAgentDownloadEndpoint": true,
+            "aadJoinPreview": false,
+            "mdmId": "",
+            "sessionHostConfigurationLastUpdateTime": "",
+            "registrationInfoToken": "${azurerm_virtual_desktop_host_pool_registration_info.registrationkey.token}" 
+        }
+    }
+SETTINGS
 
-  depends_on = [
-    azurerm_windows_virtual_machine.main
-  ]
-}
-
-
-
-
-
-
-
-resource "azurerm_log_analytics_workspace" "avd_logs" {
-  name                = "law-avd-logs"
-  location            = var.location
-  resource_group_name = azurerm_resource_group.rg-AVD2.name
-  sku                 = "PerGB2018"
-  retention_in_days   = 30
-}
-
-// This resource now uses count to iterate over all virtual machines defined
-// in azurerm_windows_virtual_machine.main, creating a diagnostic setting for each.
-// Each setting sends "AllMetrics" data to the specified Log Analytics Workspace.
-resource "azurerm_monitor_diagnostic_setting" "avd_vm_diag" {
-  count = length(azurerm_windows_virtual_machine.main)
-
-  // Unique name for each diagnostic setting resource
-  name = "diag-avd-vm-${count.index + 1}"
-
-  // Target VM for which diagnostics are captured
-  target_resource_id = azurerm_windows_virtual_machine.main[count.index].id
-
-  // Reference to the Log Analytics Workspace for sending diagnostic data
-  log_analytics_workspace_id = azurerm_log_analytics_workspace.avd_logs.id
-
-  // Configure metrics collection for all available metrics
-  metric {
-    category = "AllMetrics"
-    enabled  = true
-  }
-
-  // Ensure the diagnostic settings are applied after the VMs and the workspace are created
-  depends_on = [
-    azurerm_windows_virtual_machine.main,
-    azurerm_log_analytics_workspace.avd_logs
-  ]
-}
-resource "azurerm_monitor_metric_alert" "avd_cpu_alert" {
-  // Alert name and associated resource group
-  name                = "avd-vm-high-cpu"
-  resource_group_name = azurerm_resource_group.rg-AVD2.name
-
-  // Apply alert to all VMs by referencing the list of VM ids using the splat operator
-  scopes = azurerm_windows_virtual_machine.main[*].id
-
-  // Description explains when the alert is triggered
-  description = "Alert when average CPU usage on all AVD VMs exceeds 80% for 5 minutes."
-
-  // Severity, window size, and frequency settings for the alert
-  severity    = 2
-  window_size = "PT5M"
-  frequency   = "PT1M"
-
-  // Target resource configuration for alert evaluation
-  target_resource_type     = "Microsoft.Compute/virtualMachines"
-  target_resource_location = var.location
-
-  // Criteria block defines the CPU metric threshold and aggregation method
-  criteria {
-    metric_namespace = "Microsoft.Compute/virtualMachines"
-    metric_name      = "Percentage CPU"
-    aggregation      = "Average"
-    operator         = "GreaterThan"
-    threshold        = 80
-  }
-
-  // Ensure dependencies are created before the metric alert
-  depends_on = [
-    azurerm_windows_virtual_machine.main,
-    azurerm_log_analytics_workspace.avd_logs
-  ]
+  depends_on = [azurerm_windows_virtual_machine.main]
 }
 
 
@@ -300,20 +278,13 @@ resource "azurerm_virtual_machine_extension" "FSLogixConfig" {
     azurerm_virtual_machine_extension.dsc
   ]
 }
-
-# Create a storage account for FSLogix profile storage
-resource "azurerm_storage_account" "FSLogixStorageAccount" {
-  name                     = "fslogixavdeuw1"
-  location                 = azurerm_resource_group.rg-AVD2.location
-  resource_group_name      = azurerm_resource_group.rg-AVD2.name
-  account_tier             = "Premium"
-  account_replication_type = "LRS"
-  account_kind             = "FileStorage"
+# Workspace-Application Group Associations
+resource "azurerm_virtual_desktop_workspace_application_group_association" "desktopapp" {
+  workspace_id         = azurerm_virtual_desktop_workspace.workspace.id
+  application_group_id = azurerm_virtual_desktop_application_group.ag-desktopapp.id
 }
 
-resource "azurerm_storage_share" "AVDProfileShare" {
-  name               = "userprofiles"
-  storage_account_id = azurerm_storage_account.FSLogixStorageAccount.id
-  quota              = 100
-  depends_on         = [azurerm_storage_account.FSLogixStorageAccount]
+resource "azurerm_virtual_desktop_workspace_application_group_association" "remoteapp" {
+  workspace_id         = azurerm_virtual_desktop_workspace.workspace.id
+  application_group_id = azurerm_virtual_desktop_application_group.ag-remoteapp.id
 }
