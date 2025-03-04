@@ -10,11 +10,6 @@ variable "subscription_id" {
 # -----------------------------
 # Resource Group and Location
 # -----------------------------
-variable "resource_group_name" {
-  description = "Name of the resource group"
-  type        = string
-}
-
 variable "location" {
   description = "Azure region for resources"
   type        = string
@@ -24,11 +19,6 @@ variable "location" {
 # -----------------------------
 # Network Configuration
 # -----------------------------
-variable "vnet_name" {
-  type        = string
-  description = "Name of the Virtual Network"
-}
-
 variable "avd_vnet" {
   type        = string
   description = "Name of the AVD Virtual Network"

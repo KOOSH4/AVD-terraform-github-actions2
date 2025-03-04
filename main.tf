@@ -76,7 +76,7 @@ resource "azurerm_resource_group" "rg_monitoring" {
 
 # Networking Resources
 resource "azurerm_virtual_network" "vnet" {
-  name                = var.vnet_name
+  name                = var.avd_vnet
   location            = azurerm_resource_group.rg_network.location
   resource_group_name = azurerm_resource_group.rg_network.name
   address_space       = ["10.0.0.0/16"]
@@ -87,19 +87,21 @@ resource "azurerm_subnet" "subnets" {
   resource_group_name  = azurerm_resource_group.rg_network.name
   virtual_network_name = azurerm_virtual_network.vnet.name
   address_prefixes     = ["10.0.0.0/24"]
+  depends_on           = [azurerm_virtual_network.vnet]
 }
 
 resource "azurerm_network_interface" "main" {
   count               = var.NumberOfSessionHosts
   name                = "nic-${var.vm_prefix}-${format("%02d", count.index + 1)}"
-  location            = var.avd_Location
-  resource_group_name = azurerm_resource_group.rg_network.name
+  location            = var.location
+  resource_group_name = azurerm_resource_group.rg_session_hosts.name
 
   ip_configuration {
     name                          = "ipconfig"
     subnet_id                     = azurerm_subnet.subnets.id
     private_ip_address_allocation = "Dynamic"
   }
+  depends_on = [azurerm_subnet.subnets, azurerm_resource_group.rg_session_hosts]
 }
 
 # AVD Service Resources
@@ -141,7 +143,7 @@ resource "azurerm_virtual_desktop_application_group" "ag-remoteapp" {
 resource "azurerm_windows_virtual_machine" "main" {
   count                 = var.NumberOfSessionHosts
   name                  = "vm-${var.vm_prefix}-${format("%02d", count.index + 1)}"
-  location              = var.avd_Location
+  location              = var.location
   resource_group_name   = azurerm_resource_group.rg_session_hosts.name
   network_interface_ids = [azurerm_network_interface.main[count.index].id]
   size                  = "Standard_D2s_v3"
@@ -183,12 +185,15 @@ resource "azurerm_storage_account" "FSLogixStorageAccount" {
   account_kind             = "StorageV2"
 
   large_file_share_enabled = true
+  depends_on = [
+  azurerm_resource_group.rg_storage, ]
 }
 
 resource "azurerm_storage_share" "AVDProfileShare" {
   name               = "profiles"
   storage_account_id = azurerm_storage_account.FSLogixStorageAccount.id
   quota              = 100
+  depends_on         = [azurerm_storage_account.FSLogixStorageAccount]
 }
 
 # Monitoring Resources
@@ -210,6 +215,43 @@ resource "azurerm_monitor_diagnostic_setting" "avd_vm_diag" {
     category = "AllMetrics"
     enabled  = true
   }
+  depends_on = [azurerm_windows_virtual_machine.main, azurerm_log_analytics_workspace.avd_logs]
+}
+
+resource "azurerm_monitor_metric_alert" "avd_cpu_alert" {
+  // Alert name and associated resource group
+  name                = "avd-vm-high-cpu"
+  resource_group_name = azurerm_resource_group.rg_monitoring.name
+
+  // Apply alert to all VMs by referencing the list of VM ids using the splat operator
+  scopes = azurerm_windows_virtual_machine.main[*].id
+
+  // Description explains when the alert is triggered
+  description = "Alert when average CPU usage on all AVD VMs exceeds 80% for 5 minutes."
+
+  // Severity, window size, and frequency settings for the alert
+  severity    = 2
+  window_size = "PT5M"
+  frequency   = "PT1M"
+
+  // Target resource configuration for alert evaluation
+  target_resource_type     = "Microsoft.Compute/virtualMachines"
+  target_resource_location = var.location
+
+  // Criteria block defines the CPU metric threshold and aggregation method
+  criteria {
+    metric_namespace = "Microsoft.Compute/virtualMachines"
+    metric_name      = "Percentage CPU"
+    aggregation      = "Average"
+    operator         = "GreaterThan"
+    threshold        = 80
+  }
+
+  // Ensure dependencies are created before the metric alert
+  depends_on = [
+    azurerm_windows_virtual_machine.main,
+    azurerm_log_analytics_workspace.avd_logs
+  ]
 }
 
 # VM Extensions
@@ -221,11 +263,14 @@ resource "azurerm_virtual_machine_extension" "AADLoginForWindows" {
   type                       = "AADLoginForWindows"
   type_handler_version       = "1.0"
   auto_upgrade_minor_version = true
+  depends_on                 = [azurerm_windows_virtual_machine.main]
+
 }
 
 resource "azurerm_virtual_desktop_host_pool_registration_info" "registrationkey" {
   hostpool_id     = azurerm_virtual_desktop_host_pool.hostpool.id
   expiration_date = timeadd(timestamp(), "180m")
+  depends_on      = [azurerm_virtual_desktop_host_pool.hostpool]
 }
 
 resource "azurerm_virtual_machine_extension" "dsc" {
@@ -282,9 +327,11 @@ resource "azurerm_virtual_machine_extension" "FSLogixConfig" {
 resource "azurerm_virtual_desktop_workspace_application_group_association" "desktopapp" {
   workspace_id         = azurerm_virtual_desktop_workspace.workspace.id
   application_group_id = azurerm_virtual_desktop_application_group.ag-desktopapp.id
+  depends_on           = [azurerm_virtual_desktop_workspace.workspace, azurerm_virtual_desktop_application_group.ag-desktopapp]
 }
 
 resource "azurerm_virtual_desktop_workspace_application_group_association" "remoteapp" {
   workspace_id         = azurerm_virtual_desktop_workspace.workspace.id
   application_group_id = azurerm_virtual_desktop_application_group.ag-remoteapp.id
+  depends_on           = [azurerm_virtual_desktop_workspace.workspace, azurerm_virtual_desktop_application_group.ag-remoteapp]
 }
