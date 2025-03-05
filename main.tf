@@ -89,14 +89,14 @@ resource "azurerm_virtual_network" "vnet" {
   name                = var.avd_vnet
   location            = azurerm_resource_group.rg_network.location
   resource_group_name = azurerm_resource_group.rg_network.name
-  address_space       = ["10.0.0.0/22"] # Reduced to /22 for AVD needs (~1000 addresses)
+  address_space       = ["10.0.0.0/16"] #(~1000 addresses)22
 }
 
 resource "azurerm_subnet" "subnets" {
   name                 = "default"
   resource_group_name  = azurerm_resource_group.rg_network.name
   virtual_network_name = azurerm_virtual_network.vnet.name
-  address_prefixes     = ["10.0.0.0/23"] # Reduced to /23 (~500 addresses) for AVD hosts
+  address_prefixes     = ["10.0.0.0/24"] #(~500 addresses) for AVD hosts23
   depends_on           = [azurerm_virtual_network.vnet]
 }
 
