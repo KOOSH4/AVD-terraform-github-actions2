@@ -1,3 +1,6 @@
+# -----------------------------
+# Terraform Configuration
+# -----------------------------
 terraform {
   required_providers {
     azurerm = {
@@ -16,6 +19,9 @@ terraform {
   }
 }
 
+# -----------------------------
+# Provider Configuration
+# -----------------------------
 provider "azurerm" {
   resource_provider_registrations = "none"
   features {
@@ -23,7 +29,9 @@ provider "azurerm" {
   }
 }
 
+# -----------------------------
 # Resource Groups
+# -----------------------------
 resource "azurerm_resource_group" "rg_avd_service" {
   name     = "rg-AVD-Service-wstrp"
   location = var.location
@@ -74,19 +82,21 @@ resource "azurerm_resource_group" "rg_monitoring" {
   }
 }
 
-# Networking Resources
+# -----------------------------
+# Networking Configuration
+# -----------------------------
 resource "azurerm_virtual_network" "vnet" {
   name                = var.avd_vnet
   location            = azurerm_resource_group.rg_network.location
   resource_group_name = azurerm_resource_group.rg_network.name
-  address_space       = ["10.0.0.0/16"]
+  address_space       = ["10.0.0.0/22"] # Reduced to /22 for AVD needs (~1000 addresses)
 }
 
 resource "azurerm_subnet" "subnets" {
   name                 = "default"
   resource_group_name  = azurerm_resource_group.rg_network.name
   virtual_network_name = azurerm_virtual_network.vnet.name
-  address_prefixes     = ["10.0.0.0/24"]
+  address_prefixes     = ["10.0.0.0/23"] # Reduced to /23 (~500 addresses) for AVD hosts
   depends_on           = [azurerm_virtual_network.vnet]
 }
 
@@ -104,7 +114,9 @@ resource "azurerm_network_interface" "main" {
   depends_on = [azurerm_subnet.subnets, azurerm_resource_group.rg_session_hosts]
 }
 
-# AVD Service Resources
+# -----------------------------
+# AVD Service Components
+# -----------------------------
 resource "azurerm_virtual_desktop_host_pool" "hostpool" {
   name                     = var.hostpool_name
   location                 = azurerm_resource_group.rg_avd_service.location
@@ -139,7 +151,9 @@ resource "azurerm_virtual_desktop_application_group" "ag-remoteapp" {
   depends_on          = [azurerm_virtual_desktop_host_pool.hostpool]
 }
 
-# Session Host Resources
+# -----------------------------
+# Session Host VMs
+# -----------------------------
 resource "azurerm_windows_virtual_machine" "main" {
   count                 = var.NumberOfSessionHosts
   name                  = "vm-${var.vm_prefix}-${format("%02d", count.index + 1)}"
@@ -175,7 +189,9 @@ resource "azurerm_windows_virtual_machine" "main" {
   ]
 }
 
-# Storage Resources
+# -----------------------------
+# Storage Configuration
+# -----------------------------
 resource "azurerm_storage_account" "FSLogixStorageAccount" {
   name                     = lower(replace(var.storage_account_name, "-", ""))
   resource_group_name      = azurerm_resource_group.rg_storage.name
@@ -196,7 +212,9 @@ resource "azurerm_storage_share" "AVDProfileShare" {
   depends_on         = [azurerm_storage_account.FSLogixStorageAccount]
 }
 
-# Monitoring Resources
+# -----------------------------
+# Monitoring Configuration
+# -----------------------------
 resource "azurerm_log_analytics_workspace" "avd_logs" {
   name                = "law-avd-logs"
   location            = azurerm_resource_group.rg_monitoring.location
@@ -254,7 +272,9 @@ resource "azurerm_monitor_metric_alert" "avd_cpu_alert" {
   ]
 }
 
+# -----------------------------
 # VM Extensions
+# -----------------------------
 resource "azurerm_virtual_machine_extension" "AADLoginForWindows" {
   count                      = var.NumberOfSessionHosts
   name                       = "AADLoginForWindows"
@@ -323,7 +343,9 @@ resource "azurerm_virtual_machine_extension" "FSLogixConfig" {
     azurerm_virtual_machine_extension.dsc
   ]
 }
+# -----------------------------
 # Workspace-Application Group Associations
+# -----------------------------
 resource "azurerm_virtual_desktop_workspace_application_group_association" "desktopapp" {
   workspace_id         = azurerm_virtual_desktop_workspace.workspace.id
   application_group_id = azurerm_virtual_desktop_application_group.ag-desktopapp.id
